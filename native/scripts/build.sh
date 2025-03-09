@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ..
+
 NDK_PATH="$HOME/Android/Sdk/ndk/27.1.12297006"
 
 # Android ABI types
@@ -20,7 +22,7 @@ for ABI in "${ABIS[@]}"; do
     cmake -B $BUILD_DIR \
           -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=$ABI \
-          -DANDORID_PLATFORM=android-21 \
+          -DANDROID_PLATFORM=android-21 \
           -DCMAKE_INSTALL_PREFIX=$OUTPUT_DIR/$ABI \
           -DCMAKE_BUILD_TYPE=Release \
           -DBUILD_TESTS=OFF \

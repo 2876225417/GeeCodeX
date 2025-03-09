@@ -6,7 +6,7 @@
     #ifdef ADD_EXPORTS
         #define ADD_API __declspec(dllexport)
     #else
-        #define ADD_API --declspec(dllimport)
+        #define ADD_API __declspec(dllimport)
     #endif
 #else
     #define ADD_API __attribute__((visibility("default")))

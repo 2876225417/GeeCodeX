@@ -22,5 +22,6 @@ final add_int add_Int = native_lib
 
 final add_double add_Double = native_lib
     .lookup<NativeFunction<add_double_native>>('qwq_add_double')
+
     .asFunction<add_double>();
 

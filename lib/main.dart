@@ -64,88 +64,155 @@
 
 
 import 'package:flutter/material.dart';
-import 'add_lib.dart';
-import 'native_bindings.dart';
- 
+import 'native/native_wrapper.dart';
+
 void main() {
-  runApp(const MyApp());
+  native_wrapper().intialize();
+  runApp(const books_qwq());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class books_qwq extends StatelessWidget {
+  const books_qwq({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '直接加载 C++ 库示例',
+      title: 'Native Lib Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        useMaterial3: true
       ),
-      home: const MyHomePage(),
+      home: const home_page(title: 'Native Lib Demo'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class home_page extends StatefulWidget {
+  const home_page({super.key, required this.title});
+
+  final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<home_page> createState() => _home_page_state();
 }
 
+class _home_page_state extends State<home_page> {
+  final TextEditingController _a_controller = TextEditingController();
+  final TextEditingController _b_controller = TextEditingController();
 
+  String _int_result = '';
+  String _double_result = '';
 
-
-class _MyHomePageState extends State<MyHomePage> {
-  final AddLib _addLib = AddLib();
-  final TextEditingController _aController = TextEditingController();
-  final TextEditingController _bController = TextEditingController();
-  int _result = 0;
-
-  void _calculateSum() {
-    final int a = int.tryParse(_aController.text) ?? 0;
-    final int b = int.tryParse(_bController.text) ?? 0;
-    
-    setState(() {
-      _result = 
-      _result = _addLib.add(a, b);
-    });
-  }
+  final native_wrapper _native_wrapper = native_wrapper();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('直接加载 C++ 库示例'),
+        title: Text(widget.title),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            TextField(
-              controller: _aController,
-              decoration: const InputDecoration(labelText: '输入 a'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: _bController,
-              decoration: const InputDecoration(labelText: '输入 b'),
-              keyboardType: TextInputType.number,
+            Text(
+              'Native Lib Add Demo',
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _calculateSum,
-              child: const Text('计算 a + b'),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _a_controller,
+                    decoration: const InputDecoration(
+                       labelText: 'Value A',
+                       border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    controller: _b_controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Value B',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _calculate_int_add,
+                  child: const Text("Integer Add"),
+                ),
+                ElevatedButton(
+                  onPressed: _calculate_double_add,
+                  child: const Text('Double Add'),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             Text(
-              '结果: $_result',
-              style: Theme.of(context).textTheme.headlineMedium,
+              'Integer Result: $_int_result',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Double Result: $_double_result',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
           ],
         ),
       ),
     );
   }
+
+  void _calculate_int_add() {
+    try {
+      final int a = int.parse(_a_controller.text);
+      final int b = int.parse(_b_controller.text);
+      final int result = _native_wrapper.add(a, b);
+      setState(() {
+        _int_result = result.toString();  
+      });
+    } catch (e) {
+      setState(() {
+        _int_result = 'Error: ${e.toString()}';
+      });
+    }
+  }
+
+  void _calculate_double_add() {
+    try {
+      final double a = double.parse(_a_controller.text);
+      final double b = double.parse(_b_controller.text);
+      final double result = _native_wrapper.add_double(a, b);
+      setState(() {
+        _double_result = result.toStringAsFixed(2);
+      });
+    } catch (e) {
+      setState(() {
+        _double_result = 'Error: ${e.toString()}';        
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _a_controller.dispose();
+    _b_controller.dispose();
+    super.dispose();
+  }
 }
+
+
+

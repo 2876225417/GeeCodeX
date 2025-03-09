@@ -1,11 +1,13 @@
 #!/bin/bash
 
 
+cd ../
+
 # LIBS DIR 
 SOURCE_DIR="$(pwd)/build/output"
 
 # INSTALL DIR
-JNILIBS_DIR="$(pwd)/android/app/src/main/jniLibs"
+JNILIBS_DIR="$(pwd)/../android/app/src/main/jniLibs"
 
 ABIS=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
 

@@ -11,7 +11,8 @@ add_library(add SHARED
     ${HEADERS}
 )
 
-target_compile_options(add PRIVATE ADD_API)
+
+#target_compile_definitions(add PRIVATE ADD_API)
 
 target_include_directories(add
     PUBLIC
@@ -33,8 +34,8 @@ set_target_properties(add
 if(ANDROID)
     target_link_options(add
         PRIVATE
-        -Wl, --no-undefine
-        -Wl, -z,noexecstack
+        -Wl,--no-undefined
+        -Wl,-z,noexecstack
         -static-libstdc++
     )
 endif()
@@ -47,6 +48,7 @@ install(TARGETS add
     INCLUDES DESTINATION include
 )
 
+# generate cmake
 install(EXPORT add-targets
     FILE add-targets.cmake
     NAMESPACE add::
