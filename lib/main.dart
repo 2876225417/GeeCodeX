@@ -65,7 +65,8 @@
 
 import 'package:flutter/material.dart';
 import 'add_lib.dart';
-
+import 'native_bindings.dart';
+ 
 void main() {
   runApp(const MyApp());
 }
@@ -106,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final int b = int.tryParse(_bController.text) ?? 0;
     
     setState(() {
+      _result = 
       _result = _addLib.add(a, b);
     });
   }

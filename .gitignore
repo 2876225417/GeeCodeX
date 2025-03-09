@@ -12,6 +12,9 @@ macos/
 web/
 # libs build cache
 build_*
+*/build/*
+*.so
+*.idx
 
 windows/
 .buildlog/
