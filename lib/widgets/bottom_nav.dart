@@ -24,10 +24,10 @@ class convex_bottom_nav_bar extends StatelessWidget {
       activeColor: app_colors.accent,
       color: Colors.white,
       items: const [
-        TabItem(icon: Icons.home, title: 'HomePage'),
         TabItem(icon: Icons.search, title: 'Search'),
-        TabItem(icon: Icons.add, title: 'Add'),
         TabItem(icon: Icons.favorite, title: 'Favorite'),
+        TabItem(icon: Icons.book, title: 'Read'),
+        TabItem(icon: Icons.note, title: 'Note'),
         TabItem(icon: Icons.person, title: 'Profile'),
       ],
       initialActiveIndex: selected_idx,
