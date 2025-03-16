@@ -8,7 +8,7 @@ import 'package:books_qwq/models/book.dart';
 class book_card extends StatelessWidget {
     final book m_book;
     final VoidCallback on_tap;
-
+     
     const book_card({
         super.key,
         required this.m_book,
@@ -25,7 +25,7 @@ class book_card extends StatelessWidget {
                     Expanded(child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
-                            m_book.cover,
+                            m_book.cover_url,
                             fit: BoxFit.cover,
                             width: double.infinity,
                             ),

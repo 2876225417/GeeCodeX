@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav.dart';
 
 
+import '../pages/home_page.dart';
+
 class home_screen extends StatefulWidget {
     const home_screen({Key? key}) : super(key: key);
 
@@ -17,7 +19,8 @@ class _home_screen_state extends State<home_screen> {
     int _selected_idx = 0;
 
     final List<Widget> _pages = [
-       const Center(child: Text("HomePage")),
+       const home_page(),
+       //const Center(child: Text("HomePage")),
        const Center(child: Text('search')),
        const Center(child: Text('Add')),
        const Center(child: Text('Favorite')),

@@ -1,16 +1,15 @@
-# books_qwq
 
-A new Flutter project.
+# Geecodex
 
-## Getting Started
+An **Android** App designed for digital library.
 
-This project is a starting point for a Flutter application.
+## APIs' Doc
+| **Name**              | **Method** | **Path**                                 | **Description** |
+| --------------------- | ---------- | ---------------------------------------- | --------------- |
+| Fetch All Books       | GET        | /geecodex/books/fetch_books_all          |                 |
+| Fetch Specified Book  | GET        | /geecodex/books/fetch_book/[book_id]     |                 |
+| Fetch Specified Book's Cover | GET | /geecodex/books/cover/[book_id]          |                 |
+| Fetch Specified Book's Info  | GET | /geecodex/books/info/[book_id]           |                 |
+| ... | ... | ... | ... |
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+ > Powered by **[Flutter](https://github.com/flutter/flutter)**
