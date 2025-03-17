@@ -5,6 +5,9 @@ An **Android** App designed for digital library.
 
 
 ![image](https://github.com/user-attachments/assets/dc0337ac-7065-4654-9d44-31e8a4faf0db)
+![image](https://github.com/user-attachments/assets/71dbc45a-d962-42ac-9f0c-339570323e3a)
+
+
 
 
 ## APIs' Doc
