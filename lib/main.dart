@@ -25,10 +25,10 @@ void main() {
 
 
 class my_app extends StatelessWidget {
-  const my_app({Key? key}) : super(key: key);
+  const my_app({super.key});
 
   @override 
-  Widget build(BuildContext build_ctx) {
+  Widget build(BuildContext buildCtx) {
     return MaterialApp( 
       title: 'Geecodex',
       debugShowMaterialGrid: false,

@@ -11,13 +11,13 @@ class convex_bottom_nav_bar extends StatelessWidget {
   final Function(int) on_item_selected;
 
   const convex_bottom_nav_bar({
-    Key? key,
+    super.key,
     required this.selected_idx,
     required this.on_item_selected,
-  }) : super(key: key);
+  });
 
   @override 
-  Widget build(BuildContext build_ctx) {
+  Widget build(BuildContext buildCtx) {
     return ConvexAppBar(
       style: TabStyle.reactCircle,
       backgroundColor: app_colors.primary,

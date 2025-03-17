@@ -7,7 +7,7 @@ import '../models/book.dart';
 
 
 class home_page extends StatefulWidget {
-    const home_page({Key? key}) : super(key: key);
+    const home_page({super.key});
 
     @override
     State<home_page> createState() => _home_page_state();
@@ -56,7 +56,7 @@ class _home_page_state extends State<home_page> {
   ];
 
   @override
-  Widget build(BuildContext build_ctx) {
+  Widget build(BuildContext buildCtx) {
       return Scaffold( 
         body: SafeArea( 
             child: CustomScrollView( 
