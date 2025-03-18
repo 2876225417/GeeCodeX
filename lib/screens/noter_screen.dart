@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'book_reader_screen.dart';
+import 'package:books_qwq/services/note_service.dart';
 
 class noter_screen extends StatefulWidget {
   const noter_screen({Key? key}) : super(key: key);
@@ -47,7 +48,7 @@ class _noter_screen_state extends State<noter_screen> {
 
   Future<void> _delete_notes(String id) async {
     try {
-      await note_service.delete_node(id);
+      await note_service.delete_note(id);
       await _load_notes();
 
       if (mounted) {
@@ -63,7 +64,6 @@ class _noter_screen_state extends State<noter_screen> {
     }
   }
 
-  
   @override
   Widget build(BuildContext build_ctx) {
     return Scaffold(
@@ -74,6 +74,11 @@ class _noter_screen_state extends State<noter_screen> {
             icon: const Icon(Icons.refresh),
             onPressed: _load_notes,
             tooltip: 'Refresh',
+          ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: _show_search_dialog,
+            tooltip: 'Search',
           ),
         ],
       ),
@@ -337,13 +342,13 @@ class _noter_screen_state extends State<noter_screen> {
               final updated_note = note(
                 id: note_.id,
                 text: note_.text,
-                comment: note_.comment,
+                comment: comment_controller.text,
                 source: note_.source,
                 page_number: note_.page_number,
                 created_at: note_.created_at,
               );
 
-              await note_service.delete_node(note_.id);
+              await note_service.delete_note(note_.id);
               
               await note_service.save_note(updated_note);
               
@@ -362,8 +367,97 @@ class _noter_screen_state extends State<noter_screen> {
     );
   }
 
+  void _show_search_dialog() {
+    final search_controller = TextEditingController();
+    List<note> filter_notes = [];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, index) {
+            void perform_search(String query) {
+              if (query.isEmpty) {
+                setState(() {
+                  filter_notes = [];
+                });
+                return;
+              }
+              setState(() {
+                filter_notes = _notes.where((note) {
+                  return note.text.toLowerCase().contains(query.toLowerCase()) ||
+                         note.text.toLowerCase().contains(query.toLowerCase()) ||
+                         note.source.toLowerCase().contains(query.toLowerCase());
+                }).toList();
+              });
+            }
+            
+            return AlertDialog(
+              title: const Text('Search Notes'),
+              content: Container(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: search_controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Search Keywords',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: perform_search,
+                    ),
+                    const SizedBox(height: 16),
+                    if (filter_notes.isNotEmpty) 
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: filter_notes.length,
+                          itemBuilder: (context, index) {
+                            final note_ = filter_notes[index];
+                            return ListTile(
+                              title: Text(
+                                note_.text,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                note_.source,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                _show_note_detail_dialog(note_);
+                              },
+                            );
+                          },
+                        ),
+                      )
+                    else if (search_controller.text.isNotEmpty) 
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text('No matched notes'),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () { Navigator.of(context).pop(); },
+                  child: const Text('Close'),
+                )
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _show_note_detail_dialog(note note_) {
-    final date_format = DateFormat('yyyy-MM-dd HH;mm');
+    final date_format = DateFormat('yyyy-MM-dd HH:mm');
 
     showDialog(
       context: context,
