@@ -1,11 +1,92 @@
 // lib/screens/book_reader_screen.dart
 
+import 'dart:convert';
 import 'dart:io';
+import 'package:books_qwq/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum pdf_source_type { asset, network, file, none }
+
+class note { 
+  final String id;
+  final String text;
+  final String comment;
+  final String source;
+  final String page_number;
+  final DateTime created_at;
+
+  note({
+    required this.id,
+    required this.text,
+    required this.comment,
+    required this.source,
+    required this.page_number,
+    required this.created_at
+  });
+
+  Map<String, dynamic> to_json() {
+    return {
+      'id': id,
+      'text': text,
+      'comment': comment,
+      'source': source,
+      'page_number': page_number,
+      'created_at': created_at.toIso8601String(),
+    };
+  }
+
+  factory note.from_json(Map<String, dynamic> json) {
+    return note(
+      id: json['id'],
+      text: json['text'],
+      comment: json['comment'],
+      source: json['source'],
+      page_number: json['page_number'],
+      created_at: json['created_at'],
+    );
+  }
+}
+
+class note_service {
+  static const String _note_key = 'pdf_notes';
+  
+  static Future<void> save_note(note note_) async {
+    final prefs = await SharedPreferences.getInstance();
+    final note_json = prefs.getStringList(_note_key) ?? [];
+    
+    note_json.add(jsonEncode(note_.to_json()));
+    await prefs.setStringList(_note_key, note_json);
+  }
+
+  static Future<List<note>> get_notes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final notes_json = prefs.getStringList(_note_key) ?? [];
+
+    return notes_json
+      .map((note_json) => note.from_json(jsonDecode(note_json)))
+      .toList()
+      ..sort((a, b) => b.created_at.compareTo(a.created_at));
+  }
+
+  static Future<void> delete_node(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final notes_json = prefs.getStringList(_note_key) ?? [];
+    
+    final List<String> update_note_json = [];
+    for (final note_json in notes_json) {
+      final note_ = note.from_json(jsonDecode(note_json));
+      if (note_.id != id) {
+        update_note_json.add(note_json);
+      }
+    }
+    await prefs.setStringList(_note_key, update_note_json);
+  }
+}
+
 
 class reader_screen extends StatefulWidget {
   /// *source filename
@@ -28,6 +109,7 @@ class reader_screen extends StatefulWidget {
 class _reader_screen_state extends State<reader_screen> {
   late PdfViewerController _pdf_viewer_controller;
   final TextEditingController _page_input_controller = TextEditingController();
+  final TextEditingController _comment_controller = TextEditingController();
 
   PdfTextSearchResult _search_result = PdfTextSearchResult();
 
@@ -39,12 +121,20 @@ class _reader_screen_state extends State<reader_screen> {
 
   /// *current source attributes
   String? _current_pdf_path;
+  String? _current_file_name;
   pdf_source_type _current_source_type = pdf_source_type.none;
   int _current_page = 1;
   int _total_pages = 0;
 
   /// *menu visible visible status
   bool _show_menu = false;
+
+  String _selected_text = '';
+  bool _show_note_dialog = false;
+
+  bool _is_text_selection_overlay_visible = false;
+  OverlayEntry? _text_selection_overlay;
+  Offset _text_selection_position = Offset.zero;
 
   @override
   void initState() {
@@ -70,6 +160,7 @@ class _reader_screen_state extends State<reader_screen> {
   void dispose() {
     _pdf_viewer_controller.dispose();
     _page_input_controller.dispose();
+    _comment_controller.dispose();
     super.dispose();
   }
 
@@ -83,6 +174,7 @@ class _reader_screen_state extends State<reader_screen> {
         setState(() {
           _current_pdf_path = result.files.single.path!;
           _current_source_type = pdf_source_type.file;
+          _current_file_name = result.files.single.name;
           _is_loading = false;
         });
       } else {
@@ -99,6 +191,44 @@ class _reader_screen_state extends State<reader_screen> {
         ).showSnackBar(SnackBar(content: Text('Error occurs: $e')));
       }
     }
+  }
+
+  void _handle_text_selection(String text) {
+    if (text.isNotEmpty) {
+      setState(() {
+        _selected_text = text;
+        _show_note_dialog = true;
+        _show_menu = false;
+      });
+    }
+  }
+
+  Future<void> _save_note() async {
+    if (_selected_text.isEmpty) return;
+
+    final note_ = note(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      text: _selected_text,
+      comment: _comment_controller.text,
+      source: _current_file_name ?? "Unknown",
+      page_number: _current_page.toString(),
+      created_at: DateTime.now(),
+    );
+
+    await note_service.save_note(note_);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note saved')),
+      );
+    }
+    
+    setState(() {
+      _show_note_dialog = false;
+      _selected_text = '';
+      _comment_controller.clear();
+    });
+
   }
 
   @override
@@ -278,8 +408,9 @@ class _reader_screen_state extends State<reader_screen> {
                           setState(() {
                             _is_search_text_view_visible =
                                 !_is_search_text_view_visible;
-                            if (!_is_search_text_view_visible)
+                            if (!_is_search_text_view_visible){
                               _search_result.clear();
+                            }
                             _show_menu = false;
                           });
                         },
@@ -295,7 +426,6 @@ class _reader_screen_state extends State<reader_screen> {
                           });
                         },
                       ),
-                      _build_divider(),
                       _build_tool_menu_item(
                         icon: Icons.zoom_in,
                         title: 'Zoom In',
@@ -345,7 +475,87 @@ class _reader_screen_state extends State<reader_screen> {
                 ),
               ),
             ),
+            if (_show_note_dialog) 
+              _build_note_dialog(),
         ],
+      ),
+    );
+  }
+
+  Widget _build_note_dialog() {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Card(
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Add Note',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(
+                    _selected_text,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _comment_controller,
+                  decoration: const InputDecoration(
+                    hintText: 'Add Anotation',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _show_note_dialog = false;
+                          _selected_text = '';
+                          _comment_controller.clear();
+                        });
+                      },
+                      child: const Text("Cancel"),  
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _save_note,
+                      child: const Text('Save'),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -437,27 +647,133 @@ class _reader_screen_state extends State<reader_screen> {
     );
   }
 
+  void _show_text_selection_menu(Offset position, String selected_text) {
+      _remove_text_selection_overlay();
+
+      _text_selection_position = position;
+      _selected_text = selected_text;
+
+      _text_selection_overlay = OverlayEntry(
+        builder: (context) => Positioned(
+          left: _text_selection_position.dx - 75,
+          top: _text_selection_position.dy + 10,
+          child: Material(
+            elevation: 4.0,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: _selected_text));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Copied")),
+                      );
+                      _remove_text_selection_overlay();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.content_copy, color: Colors.blue.shade700, size: 20),
+                          const SizedBox(height: 2),
+                          const Text('Copy', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: Colors.grey.shade300
+                  ),
+                  InkWell(
+                    onTap: () {
+                      _handle_text_selection(_selected_text);
+                      _remove_text_selection_overlay();
+                    },
+                    child: Container(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.note_add, color: Colors.blue.shade700, size: 20),
+                          const SizedBox(height: 2),
+                          const Text('Add Note', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      Overlay.of(context).insert(_text_selection_overlay!);
+      _is_text_selection_overlay_visible = true;
+  }
+
+  void _remove_text_selection_overlay() {
+    if(_text_selection_overlay != null) {
+      _text_selection_overlay!.remove();
+      _text_selection_overlay = null;
+      _is_text_selection_overlay_visible = false;
+    }
+  }
+
   Widget _build_pdf_viewer() {
     switch (_current_source_type) {
       case pdf_source_type.network:
-        return SfPdfViewer.network(
-          _current_pdf_path!,
-          controller: _pdf_viewer_controller,
-          enableTextSelection: true,
-          enableDoubleTapZooming: true,
-          onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-            setState(() {
-              _total_pages = details.document.pages.count;
-              _page_input_controller.text = '1';
-              _current_page = 1;
-            });
+        return GestureDetector(
+          onTap: () {
+            if (_is_text_selection_overlay_visible) {
+              _remove_text_selection_overlay();
+            }
           },
-          onPageChanged: (PdfPageChangedDetails details) {
-            setState(() {
-              _current_page = details.newPageNumber;
-              _page_input_controller.text = _current_page.toString();
-            });
-          },
+          child: SfPdfViewer.network(
+            _current_pdf_path!,
+            controller: _pdf_viewer_controller,
+            enableTextSelection: true,
+            enableDocumentLinkAnnotation: true,
+            onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+              setState(() {
+                _total_pages = details.document.pages.count;
+                _page_input_controller.text = '1';
+                _current_page = 1;
+              });
+            },
+            onPageChanged: (PdfPageChangedDetails details)  {
+              setState(() {
+                _current_page = details.newPageNumber;
+                _page_input_controller.text = _current_page.toString();
+              });
+            },
+            onTextSelectionChanged: (PdfTextSelectionChangedDetails details) {
+              if (details.selectedText != null && details.selectedText!.isNotEmpty) {
+                _selected_text = details.selectedText!;
+
+                if (details.globalSelectedRegion != null) {
+                  
+                  final region = details.globalSelectedRegion!;
+                  final position = Offset(
+                    region.left + (region.width / 2),
+                    region.bottom,
+                  );
+
+                  _show_text_selection_menu(position, details.selectedText!);    
+                    
+                }
+                 //_show_text_selection_menu(position, details.selectedText!);   
+                
+              }
+            }
+          )
         );
       case pdf_source_type.asset:
         return SfPdfViewer.asset(
@@ -480,27 +796,54 @@ class _reader_screen_state extends State<reader_screen> {
           },
         );
       case pdf_source_type.file:
-        return SfPdfViewer.file(
-          File(_current_pdf_path!),
-          controller: _pdf_viewer_controller,
-          enableTextSelection: true,
-          enableDocumentLinkAnnotation: true,
-          onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-            setState(() {
-              _total_pages = details.document.pages.count;
-              _page_input_controller.text = '1';
-              _current_page = 1;
-            });
+        return GestureDetector(
+          onTap: () {
+            if (!_is_text_selection_overlay_visible) {
+              _remove_text_selection_overlay();
+            }
           },
-          onPageChanged: (PdfPageChangedDetails details) {
-            setState(() {
-              _current_page = details.newPageNumber;
-              _page_input_controller.text = _current_page.toString();
-            });
-          },
+          child: SfPdfViewer.file(
+            File(_current_pdf_path!),
+            controller: _pdf_viewer_controller,
+            enableTextSelection: true,
+            enableDocumentLinkAnnotation: true,
+            canShowTextSelectionMenu: false,
+            onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+              setState(() {
+                _total_pages = details.document.pages.count;
+                _page_input_controller.text = '1';
+                _current_page = 1;
+              });
+            },
+            onPageChanged: (PdfPageChangedDetails details) {
+              setState(() {
+                _current_page = details.newPageNumber;
+                _page_input_controller.text = _current_page.toString();
+              });
+            },
+            onTextSelectionChanged: (PdfTextSelectionChangedDetails details) {
+              if (details.selectedText != null && details.selectedText!.isNotEmpty) {
+                _selected_text = details.selectedText!;
+
+                if (details.globalSelectedRegion != null) {
+                  final region = details.globalSelectedRegion!;
+                  final position = Offset(
+                    region.left + (region.width / 2),
+                    region.bottom,
+                  );
+
+                  _show_text_selection_menu(position, details.selectedText!);
+                } else {
+                  _remove_text_selection_overlay();
+                }
+              }
+            }
+          )
         );
       default:
         return const Center(child: Text('Please pick a PDF file'));
     }
   }
+
+
 }

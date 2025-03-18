@@ -4,6 +4,7 @@ import 'package:books_qwq/screens/book_reader_screen.dart';
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav.dart';
 import '../pages/home_page.dart';
+import 'package:books_qwq/screens/noter_screen.dart';
 
 class home_screen extends StatefulWidget {
   const home_screen({super.key});
@@ -21,7 +22,8 @@ class _home_screen_state extends State<home_screen>
     const Center(child: Text('Favorite')),
     // 修改这里，将sourceType设置为none，让用户选择文件
     const reader_screen(source_type: pdf_source_type.none),
-    const Center(child: Text('Notes')),
+    const noter_screen(),
+    //const Center(child: Text('Notes')),
     const Center(child: Text('Profile')),
   ];
 
