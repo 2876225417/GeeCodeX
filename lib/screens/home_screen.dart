@@ -1,10 +1,11 @@
 // lib/screens/home_screen.dart
 
-import 'package:books_qwq/screens/book_reader_screen.dart';
+import 'package:Geecodex/screens/book_reader_screen.dart';
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav.dart';
 import '../pages/home_page.dart';
-import 'package:books_qwq/screens/noter_screen.dart';
+import 'package:Geecodex/screens/noter_screen.dart';
+import 'package:Geecodex/screens/profile_screen.dart';
 
 class home_screen extends StatefulWidget {
   const home_screen({super.key});
@@ -24,7 +25,8 @@ class _home_screen_state extends State<home_screen>
     const reader_screen(source_type: pdf_source_type.none),
     const noter_screen(),
     //const Center(child: Text('Notes')),
-    const Center(child: Text('Profile')),
+    //const Center(child: Text('Profile')),
+    const profile_screen(),
   ];
 
   @override

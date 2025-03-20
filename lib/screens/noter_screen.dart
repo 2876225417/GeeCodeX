@@ -1,10 +1,9 @@
-
 // lib/screens/noter_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'book_reader_screen.dart';
-import 'package:books_qwq/services/note_service.dart';
+import 'package:Geecodex/services/note_service.dart';
 
 class noter_screen extends StatefulWidget {
   const noter_screen({Key? key}) : super(key: key);
@@ -35,10 +34,10 @@ class _noter_screen_state extends State<noter_screen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load notes: $e')),
-        );
-      } 
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load notes: $e')));
+      }
     } finally {
       setState(() {
         _is_loading = false;
@@ -52,14 +51,15 @@ class _noter_screen_state extends State<noter_screen> {
       await _load_notes();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note deleted')),
-      );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Note deleted')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete note: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete note: $e')));
       }
     }
   }
@@ -82,9 +82,10 @@ class _noter_screen_state extends State<noter_screen> {
           ),
         ],
       ),
-      body: _is_loading 
-          ? const Center(child: CircularProgressIndicator())
-          : _notes.isEmpty
+      body:
+          _is_loading
+              ? const Center(child: CircularProgressIndicator())
+              : _notes.isEmpty
               ? _build_empty_state()
               : _build_note_list(),
     );
@@ -95,11 +96,7 @@ class _noter_screen_state extends State<noter_screen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.note_alt_outlined,
-            size: 80,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.note_alt_outlined, size: 80, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           Text(
             'No Notes',
@@ -112,10 +109,7 @@ class _noter_screen_state extends State<noter_screen> {
           const SizedBox(height: 8),
           Text(
             'Add notes when reading...',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -139,9 +133,7 @@ class _noter_screen_state extends State<noter_screen> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -149,11 +141,7 @@ class _noter_screen_state extends State<noter_screen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.menu_book,
-                  size: 16,
-                  color: Colors.blue.shade700,
-                ),
+                Icon(Icons.menu_book, size: 16, color: Colors.blue.shade700),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -169,17 +157,17 @@ class _noter_screen_state extends State<noter_screen> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     "${note_.page_number} page",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                   ),
                 ),
               ],
@@ -192,10 +180,7 @@ class _noter_screen_state extends State<noter_screen> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey.shade300),
               ),
-              child: Text(
-                note_.text,
-                style: const TextStyle(fontSize: 15),
-              ),
+              child: Text(note_.text, style: const TextStyle(fontSize: 15)),
             ),
             if (note_.comment.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -217,10 +202,7 @@ class _noter_screen_state extends State<noter_screen> {
                 ),
                 child: Text(
                   note_.comment,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue.shade900,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.blue.shade900),
                 ),
               ),
             ],
@@ -230,10 +212,7 @@ class _noter_screen_state extends State<noter_screen> {
               children: [
                 Text(
                   date_format.format(note_.created_at),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
                 Row(
                   children: [
@@ -243,7 +222,9 @@ class _noter_screen_state extends State<noter_screen> {
                         size: 20,
                         color: Colors.blue.shade700,
                       ),
-                      onPressed: () { _show_edit_note_dialog(note_); },
+                      onPressed: () {
+                        _show_edit_note_dialog(note_);
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       tooltip: 'Edit',
@@ -253,9 +234,11 @@ class _noter_screen_state extends State<noter_screen> {
                       icon: Icon(
                         Icons.delete,
                         size: 20,
-                        color: Colors.red.shade400
+                        color: Colors.red.shade400,
                       ),
-                      onPressed: () { _show_delete_confirmation_dialog(note_); },
+                      onPressed: () {
+                        _show_delete_confirmation_dialog(note_);
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       tooltip: 'Delete',
@@ -273,97 +256,100 @@ class _noter_screen_state extends State<noter_screen> {
   void _show_delete_confirmation_dialog(note note_) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Note'),
-        content: const Text('Confirm to delete this note?'),
-        actions: [
-          TextButton(
-            onPressed: () { Navigator.of(context).pop(); },
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Note'),
+            content: const Text('Confirm to delete this note?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _delete_notes(note_.id);
+                },
+                child: Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red.shade700),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _delete_notes(note_.id);
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Colors.red.shade700),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   void _show_edit_note_dialog(note note_) {
     final comment_controller = TextEditingController(text: note_.comment);
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Note'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Text(
-                note_.text,
-                style: const TextStyle(fontSize: 14),
-              ),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Edit Note'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(note_.text, style: const TextStyle(fontSize: 14)),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: comment_controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Annotation',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: comment_controller,
-              decoration: const InputDecoration(
-                labelText: 'Annotation',
-                border: OutlineInputBorder(),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Cancel'),
               ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () { Navigator.of(context).pop(); },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              
-              final updated_note = note(
-                id: note_.id,
-                text: note_.text,
-                comment: comment_controller.text,
-                source: note_.source,
-                page_number: note_.page_number,
-                created_at: note_.created_at,
-              );
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
 
-              await note_service.delete_note(note_.id);
-              
-              await note_service.save_note(updated_note);
-              
-              await _load_notes();
+                  final updated_note = note(
+                    id: note_.id,
+                    text: note_.text,
+                    comment: comment_controller.text,
+                    source: note_.source,
+                    page_number: note_.page_number,
+                    created_at: note_.created_at,
+                  );
 
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Noted Updated')),
-                );
-              }
-            }, 
-            child: const Text('Save'), 
+                  await note_service.delete_note(note_.id);
+
+                  await note_service.save_note(updated_note);
+
+                  await _load_notes();
+
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Noted Updated')),
+                    );
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -384,14 +370,21 @@ class _noter_screen_state extends State<noter_screen> {
                 return;
               }
               setState(() {
-                filter_notes = _notes.where((note) {
-                  return note.text.toLowerCase().contains(query.toLowerCase()) ||
-                         note.text.toLowerCase().contains(query.toLowerCase()) ||
-                         note.source.toLowerCase().contains(query.toLowerCase());
-                }).toList();
+                filter_notes =
+                    _notes.where((note) {
+                      return note.text.toLowerCase().contains(
+                            query.toLowerCase(),
+                          ) ||
+                          note.text.toLowerCase().contains(
+                            query.toLowerCase(),
+                          ) ||
+                          note.source.toLowerCase().contains(
+                            query.toLowerCase(),
+                          );
+                    }).toList();
               });
             }
-            
+
             return AlertDialog(
               title: const Text('Search Notes'),
               content: Container(
@@ -409,7 +402,7 @@ class _noter_screen_state extends State<noter_screen> {
                       onChanged: perform_search,
                     ),
                     const SizedBox(height: 16),
-                    if (filter_notes.isNotEmpty) 
+                    if (filter_notes.isNotEmpty)
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -435,7 +428,7 @@ class _noter_screen_state extends State<noter_screen> {
                           },
                         ),
                       )
-                    else if (search_controller.text.isNotEmpty) 
+                    else if (search_controller.text.isNotEmpty)
                       const Padding(
                         padding: EdgeInsets.all(16.0),
                         child: Text('No matched notes'),
@@ -445,9 +438,11 @@ class _noter_screen_state extends State<noter_screen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () { Navigator.of(context).pop(); },
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                   child: const Text('Close'),
-                )
+                ),
               ],
             );
           },
@@ -461,82 +456,80 @@ class _noter_screen_state extends State<noter_screen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          note_.source,
-          style: const TextStyle(fontSize: 16),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Text(note_.text),
-              ),
-              const SizedBox(height: 16),
-              if (note_.comment.isNotEmpty) ...[
-                const Text(
-                  'Notes',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(note_.comment),
-                ),
-                const SizedBox(height: 16),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder:
+          (context) => AlertDialog(
+            title: Text(note_.source, style: const TextStyle(fontSize: 16)),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Page: ${note_.page_number}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade700,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
+                    child: Text(note_.text),
                   ),
-                  Text(
-                    date_format.format(note_.created_at),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade700,
+                  const SizedBox(height: 16),
+                  if (note_.comment.isNotEmpty) ...[
+                    const Text(
+                      'Notes',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(note_.comment),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Page: ${note_.page_number}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      Text(
+                        date_format.format(note_.created_at),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _show_edit_note_dialog(note_);
+                },
+                child: const Text('Edit'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () { 
-              Navigator.of(context).pop();
-              _show_edit_note_dialog(note_);
-            },
-            child: const Text('Edit'),
-          ),
-          TextButton(
-            onPressed: () { Navigator.of(context).pop(); },
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -551,85 +544,94 @@ class _noter_screen_state extends State<noter_screen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Categorized by Source'),
-        content: Container(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: categorized_by_source.length,
-            itemBuilder: (context, index) {
-              final source = categorized_by_source.keys.elementAt(index);
-              final count = categorized_by_source[source]!.length;
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Categorized by Source'),
+            content: Container(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: categorized_by_source.length,
+                itemBuilder: (context, index) {
+                  final source = categorized_by_source.keys.elementAt(index);
+                  final count = categorized_by_source[source]!.length;
 
-              return ListTile(
-                title: Text(source),
-                trailing: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$count',
-                    style: TextStyle(
-                      color: Colors.blue.shade900,
-                      fontSize: 12,
+                  return ListTile(
+                    title: Text(source),
+                    trailing: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$count',
+                        style: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _show_notes_from_source(source, categorized_by_source[source]!);
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _show_notes_from_source(
+                        source,
+                        categorized_by_source[source]!,
+                      );
+                    },
+                  );
                 },
-              );
-            },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () { Navigator.of(context).pop(); },
-          child: const Text('Close'),),
-        ],
-      ),
     );
   }
 
   void _show_notes_from_source(String source, List<note> notes) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('From: $source'),
-        content: Container(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: notes.length,
-            itemBuilder: (context, index) {
-              final note_ = notes[index];
-              return ListTile(
-                title: Text(
-                  note_.text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text('${note_.page_number}page'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _show_note_detail_dialog(note_);
+      builder:
+          (context) => AlertDialog(
+            title: Text('From: $source'),
+            content: Container(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: notes.length,
+                itemBuilder: (context, index) {
+                  final note_ = notes[index];
+                  return ListTile(
+                    title: Text(
+                      note_.text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text('${note_.page_number}page'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _show_note_detail_dialog(note_);
+                    },
+                  );
                 },
-              );
-            },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 }

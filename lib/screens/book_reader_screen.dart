@@ -2,16 +2,15 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:books_qwq/main.dart';
+import 'package:Geecodex/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:books_qwq/services/note_service.dart';
+import 'package:Geecodex/services/note_service.dart';
 
 enum pdf_source_type { asset, network, file, none }
-
 
 class reader_screen extends StatefulWidget {
   /// *source filename
@@ -143,17 +142,16 @@ class _reader_screen_state extends State<reader_screen> {
     await note_service.save_note(note_);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Note saved')));
     }
-    
+
     setState(() {
       _show_note_dialog = false;
       _selected_text = '';
       _comment_controller.clear();
     });
-
   }
 
   @override
@@ -333,7 +331,7 @@ class _reader_screen_state extends State<reader_screen> {
                           setState(() {
                             _is_search_text_view_visible =
                                 !_is_search_text_view_visible;
-                            if (!_is_search_text_view_visible){
+                            if (!_is_search_text_view_visible) {
                               _search_result.clear();
                             }
                             _show_menu = false;
@@ -400,8 +398,7 @@ class _reader_screen_state extends State<reader_screen> {
                 ),
               ),
             ),
-            if (_show_note_dialog) 
-              _build_note_dialog(),
+          if (_show_note_dialog) _build_note_dialog(),
         ],
       ),
     );
@@ -424,10 +421,7 @@ class _reader_screen_state extends State<reader_screen> {
               children: [
                 const Text(
                   'Add Note',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -464,7 +458,7 @@ class _reader_screen_state extends State<reader_screen> {
                           _comment_controller.clear();
                         });
                       },
-                      child: const Text("Cancel"),  
+                      child: const Text("Cancel"),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -476,7 +470,7 @@ class _reader_screen_state extends State<reader_screen> {
                       child: const Text('Save'),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -573,80 +567,98 @@ class _reader_screen_state extends State<reader_screen> {
   }
 
   void _show_text_selection_menu(Offset position, String selected_text) {
-      _remove_text_selection_overlay();
+    _remove_text_selection_overlay();
 
-      _text_selection_position = position;
-      _selected_text = selected_text;
+    _text_selection_position = position;
+    _selected_text = selected_text;
 
-      _text_selection_overlay = OverlayEntry(
-        builder: (context) => Positioned(
-          left: _text_selection_position.dx - 75,
-          top: _text_selection_position.dy + 10,
-          child: Material(
-            elevation: 4.0,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: _selected_text));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Copied")),
-                      );
-                      _remove_text_selection_overlay();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.content_copy, color: Colors.blue.shade700, size: 20),
-                          const SizedBox(height: 2),
-                          const Text('Copy', style: TextStyle(fontSize: 12)),
-                        ],
+    _text_selection_overlay = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            left: _text_selection_position.dx - 75,
+            top: _text_selection_position.dy + 10,
+            child: Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: _selected_text));
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text("Copied")));
+                        _remove_text_selection_overlay();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.content_copy,
+                              color: Colors.blue.shade700,
+                              size: 20,
+                            ),
+                            const SizedBox(height: 2),
+                            const Text('Copy', style: TextStyle(fontSize: 12)),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 30,
-                    color: Colors.grey.shade300
-                  ),
-                  InkWell(
-                    onTap: () {
-                      _handle_text_selection(_selected_text);
-                      _remove_text_selection_overlay();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.note_add, color: Colors.blue.shade700, size: 20),
-                          const SizedBox(height: 2),
-                          const Text('Add Note', style: TextStyle(fontSize: 12)),
-                        ],
+                    Container(
+                      width: 1,
+                      height: 30,
+                      color: Colors.grey.shade300,
+                    ),
+                    InkWell(
+                      onTap: () {
+                        _handle_text_selection(_selected_text);
+                        _remove_text_selection_overlay();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.note_add,
+                              color: Colors.blue.shade700,
+                              size: 20,
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Add Note',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-      Overlay.of(context).insert(_text_selection_overlay!);
-      _is_text_selection_overlay_visible = true;
+    );
+    Overlay.of(context).insert(_text_selection_overlay!);
+    _is_text_selection_overlay_visible = true;
   }
 
   void _remove_text_selection_overlay() {
-    if(_text_selection_overlay != null) {
+    if (_text_selection_overlay != null) {
       _text_selection_overlay!.remove();
       _text_selection_overlay = null;
       _is_text_selection_overlay_visible = false;
@@ -674,24 +686,24 @@ class _reader_screen_state extends State<reader_screen> {
                 _current_page = 1;
               });
             },
-            onPageChanged: (PdfPageChangedDetails details)  {
+            onPageChanged: (PdfPageChangedDetails details) {
               setState(() {
                 _current_page = details.newPageNumber;
                 _page_input_controller.text = _current_page.toString();
               });
             },
             onTextSelectionChanged: (PdfTextSelectionChangedDetails details) {
-              if (details.selectedText != null && details.selectedText!.isNotEmpty) {
+              if (details.selectedText != null &&
+                  details.selectedText!.isNotEmpty) {
                 _selected_text = details.selectedText!;
 
                 if (details.globalSelectedRegion != null) {
-                  
                   final region = details.globalSelectedRegion!;
                   final position = Offset(
                     region.left + (region.width / 2),
                     region.bottom,
                   );
-                  _show_text_selection_menu(position, details.selectedText!);    
+                  _show_text_selection_menu(position, details.selectedText!);
                 }
                 _remove_text_selection_overlay();
               }
@@ -724,7 +736,8 @@ class _reader_screen_state extends State<reader_screen> {
               });
             },
             onTextSelectionChanged: (PdfTextSelectionChangedDetails details) {
-              if (details.selectedText != null && details.selectedText!.isEmpty) {
+              if (details.selectedText != null &&
+                  details.selectedText!.isEmpty) {
                 _selected_text = details.selectedText!;
               }
 
@@ -734,7 +747,7 @@ class _reader_screen_state extends State<reader_screen> {
                   region.left + (region.width / 2),
                   region.bottom,
                 );
-                
+
                 _show_text_selection_menu(position, details.selectedText!);
               } else {
                 _remove_text_selection_overlay();
@@ -769,7 +782,8 @@ class _reader_screen_state extends State<reader_screen> {
               });
             },
             onTextSelectionChanged: (PdfTextSelectionChangedDetails details) {
-              if (details.selectedText != null && details.selectedText!.isNotEmpty) {
+              if (details.selectedText != null &&
+                  details.selectedText!.isNotEmpty) {
                 _selected_text = details.selectedText!;
 
                 if (details.globalSelectedRegion != null) {
@@ -784,13 +798,11 @@ class _reader_screen_state extends State<reader_screen> {
                   _remove_text_selection_overlay();
                 }
               }
-            }
-          )
+            },
+          ),
         );
       default:
         return const Center(child: Text('Please pick a PDF file'));
     }
   }
-
-
 }
