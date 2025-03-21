@@ -555,7 +555,7 @@ class _reader_screen_state extends State<reader_screen> {
         IconButton(
           icon: Icon(Icons.navigate_next, color: Colors.grey.shade700),
           onPressed:
-              _total_pages > 0 ? () => _pdf_viewer_controller.lastPage() : null,
+              _total_pages > 0 ? () => _pdf_viewer_controller.nextPage() : null,
         ),
         IconButton(
           icon: Icon(Icons.last_page, color: Colors.grey.shade700),
@@ -679,6 +679,7 @@ class _reader_screen_state extends State<reader_screen> {
             controller: _pdf_viewer_controller,
             enableTextSelection: true,
             enableDocumentLinkAnnotation: true,
+            canShowTextSelectionMenu: false,
             onDocumentLoaded: (PdfDocumentLoadedDetails details) {
               setState(() {
                 _total_pages = details.document.pages.count;
@@ -704,8 +705,9 @@ class _reader_screen_state extends State<reader_screen> {
                     region.bottom,
                   );
                   _show_text_selection_menu(position, details.selectedText!);
+                } else {
+                  _remove_text_selection_overlay();
                 }
-                _remove_text_selection_overlay();
               }
             },
           ),
@@ -722,6 +724,7 @@ class _reader_screen_state extends State<reader_screen> {
             controller: _pdf_viewer_controller,
             enableTextSelection: true,
             enableDocumentLinkAnnotation: true,
+            canShowTextSelectionMenu: false,
             onDocumentLoaded: (PdfDocumentLoadedDetails details) {
               setState(() {
                 _total_pages = details.document.pages.count;
@@ -797,6 +800,8 @@ class _reader_screen_state extends State<reader_screen> {
                 } else {
                   _remove_text_selection_overlay();
                 }
+              } else {
+                _remove_text_selection_overlay();
               }
             },
           ),

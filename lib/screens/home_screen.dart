@@ -1,6 +1,7 @@
 // lib/screens/home_screen.dart
 
 import 'package:Geecodex/screens/book_reader_screen.dart';
+import 'package:Geecodex/screens/favorite_screen.dart';
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav.dart';
 import '../pages/home_page.dart';
@@ -20,7 +21,8 @@ class _home_screen_state extends State<home_screen>
 
   final List<Widget> _pages = [
     home_page(key: const PageStorageKey('home')),
-    const Center(child: Text('Favorite')),
+    //const Center(child: Text('Favorite')),
+    const favorite_screen(),
     // 修改这里，将sourceType设置为none，让用户选择文件
     const reader_screen(source_type: pdf_source_type.none),
     const noter_screen(),
