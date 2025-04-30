@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
-import 'package:Geecodex/screens/book_reader_screen.dart';
+import 'package:Geecodex/screens/book_reader/book_reader_screen.dart';
 
 class favorite_item {
   final String id;

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'book_reader_screen.dart';
+import '../book_reader/book_reader_screen.dart';
 import 'package:Geecodex/services/note_service.dart';
 
 class noter_screen extends StatefulWidget {

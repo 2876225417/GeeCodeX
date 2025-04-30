@@ -1,26 +1,26 @@
-// lib/screens/home_screen.dart
+// lib/screens/screen_framework.dart
 
-import 'package:Geecodex/screens/book_reader_screen.dart';
-import 'package:Geecodex/screens/favorite_screen.dart';
 import 'package:flutter/material.dart';
-import '../widgets/bottom_nav.dart';
-import '../pages/home_page.dart';
-import 'package:Geecodex/screens/noter_screen.dart';
-import 'package:Geecodex/screens/profile_screen.dart';
+import 'package:Geecodex/screens/book_browser/index.dart';
+import 'package:Geecodex/screens/book_favorites/index.dart';
+import 'package:Geecodex/screens/book_reader/index.dart';
+import 'package:Geecodex/screens/book_notes/index.dart';
+import 'package:Geecodex/screens/profile/index.dart';
+import 'package:Geecodex/widgets/index.dart';
 
-class home_screen extends StatefulWidget {
-  const home_screen({super.key});
+class screen_framework extends StatefulWidget {
+  const screen_framework({super.key});
 
   @override
-  State<home_screen> createState() => _home_screen_state();
+  State<screen_framework> createState() => _screen_framework_state();
 }
 
-class _home_screen_state extends State<home_screen>
+class _screen_framework_state extends State<screen_framework>
     with AutomaticKeepAliveClientMixin {
   int _selected_idx = 2;
 
   final List<Widget> _pages = [
-    home_page(key: const PageStorageKey('home')),
+    book_browser_screen(key: const PageStorageKey('book_browser')),
     //const Center(child: Text('Favorite')),
     const favorite_screen(),
     // 修改这里，将sourceType设置为none，让用户选择文件

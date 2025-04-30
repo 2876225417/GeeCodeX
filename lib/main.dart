@@ -1,32 +1,32 @@
-
-
 // main.dart
+
+/*** |------------ Geecodex ------------|
+ *   |      Author: @ppqwqqq            |
+ *   |      Created At: 3 8 2025        |
+ *   |    Hubei Engineering University  |
+ *   |----------------------------------|
+ */ 
+
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/home_screen.dart';
-import 'constants/app_colors.dart';
-
-
-
+import 'package:Geecodex/constants/index.dart';
+import 'package:Geecodex/screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   SystemChrome.setSystemUIOverlayStyle( 
     const SystemUiOverlayStyle( 
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-
   runApp(const my_app());
 }
 
-
 class my_app extends StatelessWidget {
   const my_app({super.key});
-
   @override 
   Widget build(BuildContext buildCtx) {
     return MaterialApp( 
@@ -46,7 +46,8 @@ class my_app extends StatelessWidget {
           ),
           useMaterial3: true,
      ),
-     home: const home_screen(),
+     // Startup Animation Screen
+     home: const splash_screen(),
     );
   }
 }

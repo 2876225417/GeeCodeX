@@ -2,9 +2,12 @@
 
 // lib/widgets/bottom_nav.dart
 
+import 'package:Geecodex/constants/index.dart';
+
 import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
-import '../constants/app_colors.dart';
+
+
 
 class convex_bottom_nav_bar extends StatelessWidget {
   final int selected_idx;

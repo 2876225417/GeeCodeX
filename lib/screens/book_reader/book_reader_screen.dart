@@ -68,10 +68,9 @@ class _reader_screen_state extends State<reader_screen> {
     _current_pdf_path = widget.source;
     _current_source_type = widget.source_type;
 
-    if (_current_page == pdf_source_type.none || _current_pdf_path == null)
-      Future.delayed(Duration.zero, () => _pick_pdf_file());
-    else
+    if (_current_page == pdf_source_type.none || _current_pdf_path == null){
       _initialize_page();
+    } else { Future.delayed(Duration.zero, () => _pick_pdf_file()); }
   }
 
   Future<void> _initialize_page() async {

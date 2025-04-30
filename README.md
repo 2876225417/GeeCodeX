@@ -11,7 +11,7 @@ An **Android** App designed for digital library.
 
 
 ## APIs' Doc
-| **Name**              | **Method** | **Path**                                 | **Description** |
+| **Name**              | **Method** | **Path**                                 | **1Description** |
 | --------------------- | ---------- | ---------------------------------------- | --------------- |
 | Fetch All Books       | GET        | /geecodex/books/fetch_books_all          |                 |
 | Fetch Specified Book  | GET        | /geecodex/books/fetch_book/[book_id]     |                 |
