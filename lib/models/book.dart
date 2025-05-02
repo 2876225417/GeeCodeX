@@ -8,8 +8,6 @@ class book {
     final String cover_url;
     final double rating;
     
-
-
     const book({
         required this.id,
         required this.title,

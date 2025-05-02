@@ -84,7 +84,7 @@ class _splash_screen_state extends State<splash_screen> with SingleTickerProvide
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'assets/star.jpg', 
+                      '../assets/star.jpg', 
                       width: 120,
                       height: 120,
                       errorBuilder: (context, error, stackTrace) {

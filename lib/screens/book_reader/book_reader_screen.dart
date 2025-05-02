@@ -9,6 +9,8 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:Geecodex/services/note_service.dart';
+import 'package:Geecodex/screens/book_reader/pdf_details_screen.dart';
+
 
 enum pdf_source_type { asset, network, file, none }
 
@@ -387,6 +389,35 @@ class _reader_screen_state extends State<reader_screen> {
                         icon: Icons.text_fields,
                         title: 'Pick Text',
                         on_tap: () {
+                          setState(() {
+                            _show_menu = false;
+                          });
+                        },
+                      ),
+                      _build_divider(),
+                      _build_tool_menu_item(
+                        icon: Icons.info_outline,
+                        title: 'PDF Details',
+                        on_tap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/pdf_details',
+                            arguments: {
+                              'title': _current_file_name,
+                              'path': _current_pdf_path,
+                            },
+                          );
+                          setState(() {
+                            _show_menu = false;
+                          });
+                        },
+                      ),
+                      _build_divider(),
+                      _build_tool_menu_item(
+                        icon: Icons.http,
+                        title: "Test HTTP",
+                        on_tap: () {
+                          Navigator.pushNamed(context, '/test_http');
                           setState(() {
                             _show_menu = false;
                           });
