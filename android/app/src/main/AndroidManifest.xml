@@ -1,10 +1,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET" />
+    !-- 基本网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 存储权限 -->
+    <!--
+        WRITE_EXTERNAL_STORAGE 在 Android 10 (API 29) 及以上版本中，
+        对于访问应用专属目录（getExternalFilesDir(), getExternalCacheDir()）通常不再需要。
+        对于访问公共目录（如下载、图片等），需要新的方式（MediaStore, SAF）或特殊权限/配置。
+        对于 Android 13 (API 33) 及以上，这个权限几乎被废弃，需要精细的媒体权限。
+        permission_handler 会处理部分兼容性，但声明仍然是好的实践，尤其针对旧版本。
+        maxSdkVersion="32" 表示此权限主要用于 API 32 及以下版本。
+        对于 API 33+，我们将依赖 permission_handler 处理或根本不需要权限（对于应用专属目录）。
+    -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <!-- 读取权限通常和写入一起请求，虽然我们主要是写入，但加上以防万一 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+
     <application
         android:networkSecurityConfig="@xml/network_security_config"
         android:label="books_qwq"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+
+        android:enableOnBackInvokedCallback="true"
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -43,5 +63,25 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="http" />
+      </intent>
+      <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+      </intent>
+      <intent>
+         <action android:name="android.intent.action.SENDTO"/>
+         <data android:scheme="mailto"/>
+      </intent>
+       <intent>
+         <action android:name="android.intent.action.SENDTO"/>
+         <data android:scheme="sms"/>
+      </intent>
+       <intent>
+         <action android:name="android.intent.action.DIAL"/>
+         <data android:scheme="tel"/>
+      </intent>
     </queries>
 </manifest>

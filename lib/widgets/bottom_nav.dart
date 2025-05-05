@@ -1,5 +1,3 @@
-
-
 // lib/widgets/bottom_nav.dart
 
 import 'package:Geecodex/constants/index.dart';
@@ -7,24 +5,22 @@ import 'package:Geecodex/constants/index.dart';
 import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 
+class ConvexBottomNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onItemSelected;
 
-
-class convex_bottom_nav_bar extends StatelessWidget {
-  final int selected_idx;
-  final Function(int) on_item_selected;
-
-  const convex_bottom_nav_bar({
+  const ConvexBottomNavBar({
     super.key,
-    required this.selected_idx,
-    required this.on_item_selected,
+    required this.selectedIndex,
+    required this.onItemSelected,
   });
 
-  @override 
+  @override
   Widget build(BuildContext buildCtx) {
     return ConvexAppBar(
       style: TabStyle.reactCircle,
-      backgroundColor: app_colors.primary,
-      activeColor: app_colors.accent,
+      backgroundColor: AppColors.primary,
+      activeColor: AppColors.accent,
       color: Colors.white,
       items: const [
         TabItem(icon: Icons.search, title: 'Search'),
@@ -33,13 +29,8 @@ class convex_bottom_nav_bar extends StatelessWidget {
         TabItem(icon: Icons.note, title: 'Note'),
         TabItem(icon: Icons.person, title: 'Profile'),
       ],
-      initialActiveIndex: selected_idx,
-      onTap: on_item_selected,
+      initialActiveIndex: selectedIndex,
+      onTap: onItemSelected,
     );
   }
-
-
 }
-
-
-

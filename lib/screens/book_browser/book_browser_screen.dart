@@ -1,311 +1,227 @@
+// lib/screens/book_browser/book_browser_screen.dart
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io'; // For HttpException
+
 import 'package:Geecodex/constants/index.dart';
-
-import 'package:Geecodex/widgets/book_card.dart';
 import 'package:Geecodex/models/book.dart';
+// Import widgets using the index file
+import 'widgets/index.dart';
 
+import 'widgets/recently_reading_list.dart';
+import 'widgets/recently_reading_header.dart';
+import 'package:Geecodex/services/reading_time_service.dart';
+import 'package:Geecodex/services/recent_reading_service.dart';
 
-class book_browser_screen extends StatefulWidget {
-  const book_browser_screen({super.key});
+class BookBrowserScreen extends StatefulWidget {
+  const BookBrowserScreen({super.key});
 
   @override
-  State<book_browser_screen> createState() => _book_browser_screen_state();
+  State<BookBrowserScreen> createState() => _BookBrowserScreenState();
 }
 
-class _book_browser_screen_state extends State<book_browser_screen> {
-  final List<book> _featuredBooks = [
-    book(id: '1', title: '活着', author: '余华', cover_url: '', rating: 9.4),
-    book(
-      id: '2',
-      title: '百年孤独',
-      author: '加西亚·马尔克斯',
-      cover_url: '',
-      rating: 9.2,
-    ),
-    book(id: '3', title: '三体', author: '刘慈欣', cover_url: '', rating: 8.8),
-  ];
+class _BookBrowserScreenState extends State<BookBrowserScreen> {
+  List<Book> _latestBooks = [];
+  bool _isLoadingLatest = true;
+  String? _errorLoadingLatest;
 
-  final List<book> _recentBooks = [
-    book(id: '4', title: '解忧杂货店', author: '东野圭吾', cover_url: '', rating: 8.5),
-    book(id: '5', title: '人类简史', author: '尤瓦尔·赫拉利', cover_url: '', rating: 9.1),
-  ];
+  // State variable to hold recent books
+  List<RecentReadingItem> _recentBooks = [];
+  bool _isLoadingRecents = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLatestBooks();
+    _loadRecentBooks();
+  }
+
+  Future<void> _loadRecentBooks() async {
+    if (!mounted) return;
+    setState(() => _isLoadingRecents = true);
+    try {
+      final recents = await RecentReadingService.getRecentBooks();
+      if (mounted) {
+        setState(() {
+          _recentBooks = recents;
+          _isLoadingRecents = false;
+        });
+      }
+    } catch (e) {
+      print("Error loading recent books for browser: $e");
+      if (mounted) {
+        setState(() => _isLoadingRecents = false);
+        // Show error?
+      }
+    }
+  }
+
+  void _onBrowseAllRecents() {
+    // TODO: Implement navigation to a screen showing all recent books
+    print("Browse All Recents tapped");
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Browse All Recents - Not Implemented Yet')),
+    );
+  }
+
+  Future<void> _fetchLatestBooks() async {
+    // Ensure state is reset before fetching
+    if (mounted) {
+      setState(() {
+        _isLoadingLatest = true;
+        _errorLoadingLatest = null;
+      });
+    }
+
+    // final url = Uri.parse('http://localhost:8080/geecodex/books/latest'); // For local testing
+    final url = Uri.parse('http://jiaxing.website/geecodex/books/latest');
+    const maxBooks = 5; // Limit to 5 books
+
+    try {
+      final response = await http
+          .get(url)
+          .timeout(const Duration(seconds: 10)); // Add timeout
+
+      if (!mounted) return; // Check if widget is still mounted after await
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(
+          utf8.decode(response.bodyBytes),
+        ); // Handle UTF8
+        setState(() {
+          _latestBooks =
+              data
+                  .map(
+                    (jsonItem) =>
+                        Book.fromJson(jsonItem as Map<String, dynamic>),
+                  )
+                  .take(maxBooks) // Take only the first 5
+                  .toList();
+          _isLoadingLatest = false;
+        });
+      } else {
+        setState(() {
+          _errorLoadingLatest =
+              'Failed to load books (Status code: ${response.statusCode})';
+          _isLoadingLatest = false;
+        });
+      }
+    } on SocketException {
+      // Specific error for network issues
+      if (!mounted) return;
+      setState(() {
+        _errorLoadingLatest = 'Network error. Please check your connection.';
+        _isLoadingLatest = false;
+      });
+    } on FormatException {
+      // Specific error for bad JSON
+      if (!mounted) return;
+      setState(() {
+        _errorLoadingLatest = 'Error parsing server response.';
+        _isLoadingLatest = false;
+      });
+    } catch (e) {
+      // Catch other potential errors
+      if (!mounted) return;
+      setState(() {
+        _errorLoadingLatest = 'An unexpected error occurred: $e';
+        _isLoadingLatest = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            _buildAppBar(),
-            _buildSearchBar(),
-            _buildSectionTitle('Featured Books'),
-            _buildFeaturedBooks(),
-            _buildReadingStats(),
-            _buildRecentlyReadingHeader(),
-            _buildRecentlyReadingList(),
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-          ],
+        // Wrap CustomScrollView with RefreshIndicator
+        child: RefreshIndicator(
+          onRefresh: _fetchLatestBooks, // Call the fetch method on pull
+          color: AppColors.primary, // Customize indicator color
+          child: CustomScrollView(
+            // Make sure the scroll view can always scroll slightly to trigger refresh,
+            // even if content fits on screen.
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildSliverAppBar(),
+              const SliverToBoxAdapter(child: SearchBarWidget()),
+              const SliverToBoxAdapter(
+                child: SectionTitleWidget(title: 'Latest Books'),
+              ),
+              SliverToBoxAdapter(
+                child: FeaturedBooksSection(
+                  isLoading: _isLoadingLatest,
+                  books: _latestBooks,
+                  errorMessage: _errorLoadingLatest,
+                  onRetry: _fetchLatestBooks,
+                ),
+              ),
+              const SliverToBoxAdapter(child: ReadingStatsCard()),
+              SliverToBoxAdapter(
+                child: RecentlyReadingHeader(
+                  title: "Continue Reading", // Or "Recently Opened"
+                  onBrowseAllPressed: _onBrowseAllRecents,
+                ),
+              ),
+              // Show loading indicator or the list
+              _isLoadingRecents
+                  ? const SliverFillRemaining(
+                    // Use SliverFillRemaining for loading state in CustomScrollView
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                  : SliverToBoxAdapter(
+                    // Use SliverToBoxAdapter for non-sliver list
+                    child: RecentlyReadingList(
+                      // Pass the fetched recent items
+                      recentItems: _recentBooks,
+                    ),
+                  ),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  SliverAppBar _buildAppBar() {
+  // Keep SliverAppBar build logic here or in a local function
+  SliverAppBar _buildSliverAppBar() {
     return SliverAppBar(
-      floating: true,
-      backgroundColor: Colors.white,
+      floating: true, // App bar appears when scrolling down
+      pinned: false, // Does not stay pinned at the top
+      snap: true, // Snaps into view
+      backgroundColor: Colors.grey[50], // Match background
       elevation: 0,
       title: Text(
-        'Geecodex',
+        'Geecodex Library', // More descriptive title
         style: TextStyle(
-          color: app_colors.primary,
+          color: AppColors.primary,
           fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.notifications_none, color: app_colors.primary),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: Icon(Icons.person_outline, color: app_colors.primary),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
-
-  SliverToBoxAdapter _buildSearchBar() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search books...',
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: Icon(Icons.search, color: app_colors.primary),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Colors.grey[200],
-            contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          icon: Icon(
+            Icons.notifications_none,
+            color: AppColors.primary.withOpacity(0.8),
           ),
-        ),
-      ),
-    );
-  }
-
-  SliverToBoxAdapter _buildSectionTitle(String title) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: Text(title, style: app_text_styles.section_title),
-      ),
-    );
-  }
-
-  SliverToBoxAdapter _buildFeaturedBooks() {
-    return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 220,
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          scrollDirection: Axis.horizontal,
-          itemCount: _featuredBooks.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: book_card(m_book: _featuredBooks[index], on_tap: () {}),
-            );
+          tooltip: 'Notifications',
+          onPressed: () {
+            // TODO: Implement notifications action
           },
         ),
-      ),
-    );
-  }
-
-  SliverToBoxAdapter _buildReadingStats() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [app_colors.primary, app_colors.primary_light],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: app_colors.primary.withOpacity(0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.auto_stories,
-                  color: Colors.white,
-                  size: 36,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Weekly Reading Goal',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '3 Hours 34 Minutes',
-                    style: app_text_styles.heading.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: app_colors.primary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Reading',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  SliverToBoxAdapter _buildRecentlyReadingHeader() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Recently Reading', style: app_text_styles.section_title),
-            TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(foregroundColor: app_colors.accent),
-              child: const Text(
-                "Browse All",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  SliverList _buildRecentlyReadingList() {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        final book = _recentBooks[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 50,
-                  height: 70,
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: Icon(Icons.book, color: Colors.grey[600]),
-                  ),
-                ),
-              ),
-              title: Text(
-                book.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(book.author),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: 0.3 + (index * 0.2), // 示例进度
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation(app_colors.accent),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${30 + (index * 10)}% completed',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: app_colors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.star, color: app_colors.accent, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${book.rating}',
-                      style: TextStyle(
-                        color: app_colors.accent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              onTap: () {},
-              isThreeLine: true,
-            ),
-          ),
-        );
-      }, childCount: _recentBooks.length),
+        // IconButton( // Example: Add profile button if needed
+        //   icon: Icon(Icons.person_outline, color: AppColors.primary.withOpacity(0.8)),
+        //   tooltip: 'Profile',
+        //   onPressed: () {
+        //      // TODO: Navigate to profile
+        //   },
+        // ),
+        const SizedBox(width: 8), // Add some padding
+      ],
     );
   }
 }
