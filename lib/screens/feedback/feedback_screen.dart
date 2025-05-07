@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // Import http package
 
 // API 常量
-const String _apiBaseUrl = 'https://jiaxing.website';
+const String _apiBaseUrl = 'http://jiaxing.website';
 const String _feedbackApiEndpoint = '/geecodex/feedback'; // 更新后的路径
 
 class FeedbackScreen extends StatefulWidget {
