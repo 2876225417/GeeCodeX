@@ -3,12 +3,15 @@ description: "A Codex For Geeks"
 
 publish_to: 'none' 
 
-version: 0.0.2
+version: 0.0.3+1
 
 environment:
   sdk: ^3.7.0
 dependencies:
   flutter:
+    sdk: flutter
+  
+  flutter_localizations:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
@@ -54,5 +57,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
+  generate: true
+
   assets:
     - lib/assets/

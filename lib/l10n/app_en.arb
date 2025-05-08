@@ -1,0 +1,62 @@
+{
+    "@@locale": "en",
+    "appTitle": "Geecodex",
+    "@appTitle": {
+      "description": "The title of the application"
+    },
+    "searchHint": "Search books, authors, genres...",
+    "favoritesTitle": "Favorites",
+    "notesTitle": "My Notes",
+    "profileTitle": "Profile & Settings",
+    "latestBooks": "Latest Books",
+    "continueReading": "Continue Reading",
+    "browseAll": "Browse All",
+    "thisWeeksReading": "This Week's Reading",
+    "viewHistory": "View History",
+    "noFavoritesYet": "No Favorites Yet",
+    "addFavoritesHint": "Add books to your favorites from the details screen using the heart icon.",
+    "noNotesYet": "No Notes Yet",
+    "notesHint": "Your highlights and notes from books will appear here. Pull down to refresh.",
+    "noResultsFound": "No results found for \"{query}\"",
+    "@noResultsFound": {
+      "description": "Message shown when search yields no results",
+      "placeholders": {
+        "query": {
+          "type": "String",
+          "example": "Flutter"
+        }
+      }
+    },
+    "removeFromFavorites": "Remove from Favorites",
+    "removeConfirmMsg": "Remove \"{fileName}\" from favorites?",
+    "@removeConfirmMsg": {
+        "placeholders": {
+            "fileName": {
+                "type": "String"
+            }
+        }
+    },
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "editNotes": "Edit Notes",
+    "save": "Save",
+    "page": "Page {pageNumber}",
+     "@page": {
+         "placeholders": {
+             "pageNumber": {
+                 "type": "String"
+             }
+         }
+     },
+     "addedDateLabel": "Added: {date}",
+     "@addedDateLabel": {
+         "placeholders": {
+             "date": {
+                 "type": "String",
+                 "format": "yMMMd"
+             }
+         }
+     },
+     "fileMissing": "File missing"
+
+  }

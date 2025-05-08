@@ -1,5 +1,5 @@
 // lib/models/book.dart
-import 'package:flutter/foundation.dart'; // For kDebugMode
+import 'package:flutter/foundation.dart';
 
 class Book {
   final int id; // API uses int ID
@@ -15,8 +15,6 @@ class Book {
   final int? downloadCount;
   final DateTime? createdAt; // Parse from String
   String coverUrl; // This will be constructed
-
-  // Removed rating as it's not in the API response
 
   Book({
     required this.id,
@@ -36,7 +34,6 @@ class Book {
 
   // Factory constructor to parse JSON
   factory Book.fromJson(Map<String, dynamic> json) {
-    // Helper function to parse date safely
     DateTime? parseDateTime(String? dateString) {
       if (dateString == null) return null;
       try {

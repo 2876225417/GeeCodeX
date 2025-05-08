@@ -1,7 +1,9 @@
+// lib/constants/app_colors.dart
+
 /// App Colors
-///
 /// Defines the color palette used throughout the application.
 /// Follows Material Design color naming conventions where applicable.
+library;
 
 import 'package:flutter/material.dart';
 
@@ -11,22 +13,22 @@ class AppColors {
 
   // --- Primary Palette ---
   static const Color primary = Color(0xFF3F5185);
-  static const Color primaryLight = Color(0xFF757DE8); // Was: primary_light
-  static const Color primaryDark = Color(0xFF002984); // Was: primary_dark
+  static const Color primaryLight = Color(0xFF757DE8);
+  static const Color primaryDark = Color(0xFF002984);
 
   // --- Accent Palette ---
   static const Color accent = Color(0xFFFF4081);
-  static const Color accentLight = Color(0xFFFF7980); // Was: accent_light
-  static const Color accentDark = Color(0xFFC60055); // Was: accent_dark
+  static const Color accentLight = Color(0xFFFF7980);
+  static const Color accentDark = Color(0xFFC60055);
 
   // --- Background & Surface ---
   static const Color background = Color(0xFFF5F5F5);
   static const Color surface = Colors.white;
 
   // --- Text Colors ---
-  static const Color textPrimary = Color(0xFF212121); // Was: text_primary
-  static const Color textSecondary = Color(0xFF757575); // Was: text_secondary
-  static const Color textHint = Color(0xFFBDBDBD); // Was: text_hint
+  static const Color textPrimary = Color(0xFF212121);
+  static const Color textSecondary = Color(0xFF757575);
+  static const Color textHint = Color(0xFFBDBDBD);
 
   // --- Signal Colors ---
   static const Color error = Color(0xFFD32F2F);
@@ -37,10 +39,9 @@ class AppColors {
   ); // Note: Might consider a bluer info color like Colors.blue
 
   // --- Navigation Bar ---
-  static const Color navBarBackground = primary; // Was: nav_bar_background
-  static const Color navBarActiveItem = accent; // Was: nav_bar_active_item
-  static const Color navBarInactiveItem =
-      Colors.white70; // Was: nav_bar_inactive_item
+  static const Color navBarBackground = primary;
+  static const Color navBarActiveItem = accent;
+  static const Color navBarInactiveItem = Colors.white70;
 
   // --- UI Elements ---
   static const Color divider = Color(0xFFBDBDBD);

@@ -1,0 +1,28 @@
+{
+    "@@locale": "zh",
+    "appTitle": "Geecodex",
+    "searchHint": "搜索书籍、作者、类型...",
+    "favoritesTitle": "收藏",
+    "notesTitle": "我的笔记",
+    "profileTitle": "个人资料与设置",
+    "latestBooks": "最新书籍",
+    "continueReading": "继续阅读",
+    "browseAll": "查看全部",
+    "thisWeeksReading": "本周阅读时长",
+    "viewHistory": "查看历史",
+    "noFavoritesYet": "暂无收藏",
+    "addFavoritesHint": "请在书籍详情页点击心形图标添加收藏。",
+    "noNotesYet": "暂无笔记",
+    "notesHint": "您在书籍中的高亮和笔记将会显示在此处。下拉刷新。",
+    "noResultsFound": "未能找到与 \"{query}\" 相关的结果",
+    "removeFromFavorites": "从收藏中移除",
+    "removeConfirmMsg": "确定要将 \"{fileName}\" 从收藏中移除吗？",
+    "cancel": "取消",
+    "remove": "移除",
+    "editNotes": "编辑笔记",
+    "save": "保存",
+    "page": "第 {pageNumber} 页",
+    "addedDateLabel": "添加于: {date}",
+    "fileMissing": "文件丢失"
+
+}
