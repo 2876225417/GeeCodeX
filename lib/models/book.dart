@@ -73,5 +73,5 @@ class Book {
     );
   }
 
-  // Optional: Add a toJson method if you need to send Book data
+  // TODO: Add a toJson method if need to send Book data
 }
