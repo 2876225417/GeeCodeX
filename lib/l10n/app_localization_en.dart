@@ -42,13 +42,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFavoritesYet => 'No Favorites Yet';
 
   @override
-  String get addFavoritesHint => 'Add books to your favorites from the details screen using the heart icon.';
+  String get addFavoritesHint =>
+      'Add books to your favorites from the details screen using the heart icon.';
 
   @override
   String get noNotesYet => 'No Notes Yet';
 
   @override
-  String get notesHint => 'Your highlights and notes from books will appear here. Pull down to refresh.';
+  String get notesHint =>
+      'Your highlights and notes from books will appear here. Pull down to refresh.';
 
   @override
   String noResultsFound(String query) {
