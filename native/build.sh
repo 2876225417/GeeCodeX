@@ -73,7 +73,8 @@ cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
       -DANDROID_PLATFORM="${DEFAULT_ANDROID_API}" \
       -DCMAKE_BUILD_TYPE="${DEFAULT_CMAKE_BUILD_TYPE}" \
       -DBUILD_TESTS=OFF \
-      -DBUILD_EXAMPLES=OFF 
+      -DBUILD_EXAMPLES=OFF \
+      -DUSE_COLORED_MESSAGES=ON  # 彩色打印信息 
 
 # 3. Build
 echo -e "${GREEN}Building...${NC}"

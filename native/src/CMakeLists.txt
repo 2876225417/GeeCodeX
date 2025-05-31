@@ -51,36 +51,61 @@ if(ANDROID)
 endif()
 
 file(GLOB_RECURSE SOURCES "*.cpp")
-file(GLOB_RECURSE HEADERS "*.h")
+# file(GLOB_RECURSE HEADERS "*.h")
 
 add_library(${FFI_LIBRARY_NAME} SHARED
     ${SOURCES}
-    ${HEADERS}
+    # ${HEADERS}
 )
 
 target_compile_definitions(${FFI_LIBRARY_NAME} PRIVATE QWQ_BOOKS_NATIVE_BUILD_SHARED_LIBS)
 
-target_include_directories(${FFI_LIBRARY_NAME}
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/${FFI_LIBRARY_NAME}>
+
+target_include_directories(${FFI_LIBRARY_NAME} 
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/include
+
 )
 
-if (ANDROID AND OpenCV_FOUND)
-    target_include_directories(${FFI_LIBRARY_NAME} PUBLIC 
-        $<BUILD_INTERFACE:${OpenCV_INCLUDE_DIRS})
+# target_include_directories(${FFI_LIBRARY_NAME}
+#     PUBLIC
+#         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+#         $<INSTALL_INTERFACE:include/${FFI_LIBRARY_NAME}>
+#     PRIVATE
+#         ${CMAKE_CURRENT_SOURCE_DIR}
+# )
 
-    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC ${OpenCV_LIBS})
+if (ANDROID AND OpenCV_FOUND)
+    target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
+        ${OpenCV_INCLUDE_DIRS})
+
+
 endif()
 
 if (ANDROID AND onnxruntime_FOUND)
     target_include_directories(${FFI_LIBRARY_NAME} PUBLIC
-        $<BUILD_INTERFACE:${onnxruntime_INCLUDE_DIRS})
+        ${onnxruntime_INCLUDE_DIRS})
     
-    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC onnxruntime::onnxruntime)
 endif() 
+
+target_include_directories(${FFI_LIBRARY_NAME}
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+if (ANDROID AND OpenCV_FOUND)
+    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC ${OpenCV_LIBS})
+
+endif()
+
+if (ANDROID AND onnxruntime_FOUND)
+    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC onnxruntime::onnxruntime)
+    
+endif() 
+
+
 
 if (ANDROID)
     target_link_libraries(${FFI_LIBRARY_NAME} PRIVATE log)
@@ -108,7 +133,7 @@ install(TARGETS ${FFI_LIBRARY_NAME}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include/${FFI_LIBRARY_NAME}
+    INCLUDES DESTINATION include
 )
 
 # generate cmake

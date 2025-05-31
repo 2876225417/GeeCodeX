@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(qwq_books_natives LANGUAGES CXX)
+project(qwq_books_natives LANGUAGES CXX VERSION 0.0.1)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(PrettyPrint)
+
+pretty_message(INFO  "Configuring project: ${PROJECT_NAME} v${PROJECT_VERSION}")
+pretty_message(STAUS "Build type set to: ${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
