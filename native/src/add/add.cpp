@@ -1,8 +1,9 @@
 
 
 #include <add/add.h>
+#include <exception>
 #include <internal/utils.h>
-
+#include <opencv2/core.hpp>
 #include <limits>
 #include <iostream>
 
@@ -20,19 +21,32 @@ namespace add {
     return a + b + 1;
     }
 
-
-
     double add(double a, double b) {
         return a + b;
+    }
+
+    const char* test_opencv_version() {
+        static std::string version_info;
+        try {
+            std::string cv_version = cv::getVersionString();
+            version_info = "OpenCV Version (Custom Build): " + cv_version;
+            return version_info.c_str();
+        } catch (const std::exception& e) {
+
+        }
     }
 }
 
 
 extern "C" {
-    /*ADD_API*/ int qwq_add_int(int a, int b) {
+    /*FFI_EXPORT*/ int qwq_add_int(int a, int b) {
         return add::add(a, b);
     }
-    /*ADD_API*/ double qwq_add_double(double a, double b) {
+    /*FFI_EXPORT*/ double qwq_add_double(double a, double b) {
         return add::add(a, b);
+    }
+
+    /*FFI_EXPORT*/ const char* qwq_opencv() {
+        return add::test_opencv_version();
     }
 }

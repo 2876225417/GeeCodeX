@@ -14,12 +14,14 @@ mkdir -p "$OUTPUT_DIR"
 echo "Building libraries..."
 
 for ABI in "${ABIS[@]}"; do
+    echo "------------------------------"
     echo "Building for $ABI..."
+    echo "------------------------------"
 
-    BUILD_DIR="build/android_$ABI"
-    mkdir -p $BUILD_DIR
+    BUILD_DIR_ABI="build/android_$ABI"
+    mkdir -p "$BUILD_DIR_ABI"
     
-    cmake -B $BUILD_DIR \
+    cmake -B $BUILD_DIR_ABI \
           -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=$ABI \
           -DANDROID_PLATFORM=android-21 \
@@ -27,12 +29,14 @@ for ABI in "${ABIS[@]}"; do
           -DCMAKE_BUILD_TYPE=Release \
           -DBUILD_TESTS=OFF \
           -DBUILD_EXAMPLES=OFF \
+          .
 
-    cmake --build $BUILD_DIR --config Release
+    cmake --build "$BUILD_DIR_ABI" --config Release --parallel $(nproc)
 
-    cmake --install $BUILD_DIR
+    cmake --install "$BUILD_DIR_ABI"
 
-    echo "Completed building for $ABI"
+    echo "Completed building and installing FFI library for $ABI to $OUTPUT_DIR/$ABI" 
 done
 
-echo "All builds completed! Libraries are in $OUTPUT_DIR"
+echo ""
+echo "All FFI library builds completed! Libraries are in $OUTPUT_DIR"

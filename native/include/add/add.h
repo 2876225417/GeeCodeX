@@ -2,9 +2,11 @@
 
 #pragma once
 
+#include "config.h"
 #include <add/config.h>
 
 namespace add {
-    ADD_API int add(int a, int b);
-    ADD_API double add(double a, double b);
+    FFI_EXPORT int add(int a, int b);
+    FFI_EXPORT double add(double a, double b);
+    FFI_EXPORT const char* test_opencv_version();
 }

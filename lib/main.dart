@@ -26,7 +26,15 @@ import 'package:Geecodex/screens/book_reader/widgets/pdf_viewer_wrapper.dart';
 import 'package:Geecodex/models/book.dart';
 import 'package:Geecodex/screens/book_details/book_details_screen.dart';
 
+import 'package:Geecodex/native/native_wrapper.dart';
+
 void main() {
+  final wrapper = native_wrapper();
+  wrapper.intialize();
+  double sum = wrapper.add_double(10, 10);
+  String test = wrapper.test_opencv();
+  print("Sum of 10 and 10: $sum");
+  print(test);
   WidgetsFlutterBinding.ensureInitialized();
   // Setting system UI overlay style is good practice
   SystemChrome.setSystemUIOverlayStyle(
