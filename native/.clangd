@@ -1,0 +1,12 @@
+CompileFlags:
+    CompliationDatabase: build/android_arm64-v8a
+
+    FallbackFlags:
+        - -std=c++17
+
+Index:
+    Background: Build
+    
+    StandardLibrary: Yes
+
+    External: Yes

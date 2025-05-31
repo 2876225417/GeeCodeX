@@ -1,6 +1,3 @@
-
-# src/CMakeLists.txt
-
 cmake_minimum_required(VERSION 3.16)
 
 set(FFI_LIBRARY_NAME "qwq_books_native")
@@ -61,7 +58,6 @@ add_library(${FFI_LIBRARY_NAME} SHARED
     ${HEADERS}
 )
 
-#target_compile_definitions(add PRIVATE ADD_API)
 target_compile_definitions(${FFI_LIBRARY_NAME} PRIVATE QWQ_BOOKS_NATIVE_BUILD_SHARED_LIBS)
 
 target_include_directories(${FFI_LIBRARY_NAME}
