@@ -35,6 +35,11 @@ class native_wrapper {
     return _bindings.qwq_opencv();
   }
 
+  String test_onnxruntime() {
+    _ensure_intialized();
+    return _bindings.testOnnxruntimeApiVersion();
+  }
+
   void _ensure_intialized() {
     if (!_initialized) {
       throw StateError(

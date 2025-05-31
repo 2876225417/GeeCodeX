@@ -63,5 +63,6 @@ app.*.map.json
 /android/app/release
 
 # native 3rdparty
-
+native/3rdparty/build
 native/3rdparty/opencv
+native/3rdparty/onnxruntime

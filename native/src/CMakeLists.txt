@@ -27,6 +27,32 @@ if(ANDROID)
     endif()
 endif()
 
+if(ANDROID)
+    set(CUSTOM_ONNXRUNTIME_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime")
+    
+    set(onnxruntime_DIR "${CUSTOM_ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/onnxruntime")
+    
+    if (NOT EXISTS "${onnxruntime_DIR}/onnxruntimeConfig.cmake")
+        message(FATAL_ERROR "onnxruntimeConfig.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${onnxruntime_DIR}. Ensure custom ONNXRuntime builds are in native/3rdparty/onnxruntime/ and path is correct")
+    else()
+        message(STATUS "Using onnxruntime_DIR: ${onnxruntime_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+
+    find_package(onnxruntime REQUIRED)
+
+    if (NOT onnxruntime_FOUND)
+        message(FATAL_ERROR "Custom ONNXRuntime configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+    else() 
+        message(STATUS "Found Custom ONNXRuntime (version ${onnxruntime_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        get_target_property(ORT_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
+        get_target_property(ORT_LIBRARIES onnxruntime::onnxruntime INTERFACE_LINK_LIBRARIES)
+        message(STATUS " ONNXRuntime Include Dirs (from target): ${ORT_INCLUDE_DIRS}")
+        message(STATUS " ONNXRuntime Libraries (from target): ${ORT_LIBRARIES}")
+        message(STATUS " ONNXRuntime_INCLUDE_DIRS (variable): ${onnxruntime_INCLUDE_DIRS}")
+        message(STATUS " ONNXRuntime_LIBRARIES (variable): ${onnxruntime_LIBRARIES}")
+    endif()
+endif()
+
 file(GLOB_RECURSE SOURCES "*.cpp")
 file(GLOB_RECURSE HEADERS "*.h")
 
@@ -52,6 +78,14 @@ if (ANDROID AND OpenCV_FOUND)
 
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC ${OpenCV_LIBS})
 endif()
+
+if (ANDROID AND onnxruntime_FOUND)
+    target_include_directories(${FFI_LIBRARY_NAME} PUBLIC
+        $<BUILD_INTERFACE:${onnxruntime_INCLUDE_DIRS})
+    
+    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC onnxruntime::onnxruntime)
+endif() 
+
 if (ANDROID)
     target_link_libraries(${FFI_LIBRARY_NAME} PRIVATE log)
 endif()

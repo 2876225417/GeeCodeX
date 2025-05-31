@@ -7,6 +7,11 @@ import 'package:ffi/ffi.dart';
 typedef _QwQOpenCVNativeSignature = Pointer<Utf8> Function();
 typedef _QwQOpenCVDartPointerFunction = Pointer<Utf8> Function();
 
+// --- 【新增】为 ONNXRuntime 测试函数定义的类型别名 ---
+typedef _TestONNXRuntimeApiVersionNativeSignature = Pointer<Utf8> Function();
+typedef _TestONNXRuntimeApiVersionDartPointerFunction =
+    Pointer<Utf8> Function();
+
 class native_bindings {
   static final native_bindings _instance = native_bindings._internal();
 
@@ -25,6 +30,10 @@ class native_bindings {
   late final _QwQOpenCVDartPointerFunction _qwq_opencv_native_call;
 
   late final String Function() qwq_opencv;
+
+  late final _TestONNXRuntimeApiVersionDartPointerFunction
+  _test_onnxruntime_native_call;
+  late final String Function() testOnnxruntimeApiVersion; // 与 C++ 函数名对应
 
   void initialize() {
     _native_lib = _load_library();
@@ -50,6 +59,22 @@ class native_bindings {
       final Pointer<Utf8> resultPointer = _qwq_opencv_native_call();
       if (resultPointer.address == nullptr) {
         return "Error: Native function 'qwq_opencv' returned a null pointer.";
+      }
+      return resultPointer.toDartString();
+    };
+
+    // --- 【新增】初始化 testOnnxruntimeApiVersion ---
+    _test_onnxruntime_native_call =
+        _native_lib
+            .lookup<NativeFunction<_TestONNXRuntimeApiVersionNativeSignature>>(
+              'qwq_onnxruntime',
+            ) // C++ 中导出的函数名
+            .asFunction<_TestONNXRuntimeApiVersionDartPointerFunction>();
+
+    testOnnxruntimeApiVersion = () {
+      final Pointer<Utf8> resultPointer = _test_onnxruntime_native_call();
+      if (resultPointer.address == nullptr) {
+        return "错误: 原生函数 'test_onnxruntime_api_version' 返回了空指针。";
       }
       return resultPointer.toDartString();
     };

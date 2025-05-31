@@ -7,6 +7,8 @@ FFI_LIBS_INSTALL_DIR_BASE="$(pwd)/build/output"
 
 CUSTOM_OPENCV_INSTALL_DIR_BASE="$(pwd)/3rdparty/opencv"
 
+CUSTOM_ONNXRUNTIME_INSTALL_DIR_BASE="$(pwd)/3rdparty/onnxruntime"
+
 JNILIBS_DIR_FLUTTER_PROJECT="$(pwd)/../android/app/src/main/jniLibs"
 
 ABIS=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
@@ -48,6 +50,13 @@ for ABI in "${ABIS[@]}"; do
         echo "Warning: libopencv_img_hash.so NOT FOUND for $ABI at $OPENCV_LIB_SOURCE_PATH"
     fi
 
+    ONNXRUNTIME_LIB_SOURCE_PATH="${CUSTOM_ONNXRUNTIME_INSTALL_DIR_BASE}/onnxruntime_android_${ABI}/lib/libonnxruntime.so"
+    if [ -f "$ONNXRUNTIME_LIB_SOURCE_PATH" ]; then
+        echo "Copying $ONNXRUNTIME_LIB_SOURCE_PATH to $TARGET_ABI_JNI_DIR/"
+        cp -v "$ONNXRUNTIME_LIB_SOURCE_PATH" "$TARGET_ABI_JNI_DIR/"
+    else
+        echo "Warning: libonnxruntime.so NOT FOUND for $ABI at $ONNXRUNTIME_LIB_SOURCE_PATH" >&2
+    fi
 done
 
 echo ""

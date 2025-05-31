@@ -32,9 +32,11 @@ void main() {
   final wrapper = native_wrapper();
   wrapper.intialize();
   double sum = wrapper.add_double(10, 10);
-  String test = wrapper.test_opencv();
+  String test_opencv = wrapper.test_opencv();
   print("Sum of 10 and 10: $sum");
-  print(test);
+  print(test_opencv);
+  String test_onnxruntime = wrapper.test_onnxruntime();
+  print(test_onnxruntime);
   WidgetsFlutterBinding.ensureInitialized();
   // Setting system UI overlay style is good practice
   SystemChrome.setSystemUIOverlayStyle(
