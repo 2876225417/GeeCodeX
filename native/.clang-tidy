@@ -1,0 +1,12 @@
+
+Checks: >
+    -*,
+    bugprone-*,
+    cert-*,
+    cppcoreguidelines-*,
+    goole-*,
+    llvm-*,
+    misc-*,
+    modernize-*,
+    performance-*,
+    protablity-*,

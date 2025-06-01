@@ -8,11 +8,9 @@
 #include <iostream>
 #include <onnxruntime_cxx_api.h>
 #include <onnxruntime_c_api.h>
+#include <opencv2/core/base.hpp>
 #include <string>
 
-#ifdef ORT_API_VERSION
-static_assert(1, "yes");
-#endif
 
 namespace add {
     int add(int a, int b) {

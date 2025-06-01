@@ -32,14 +32,20 @@ add_subdirectory(src)
 # for tests
 option(BUILD_TESTS "Build tests" OFF)
 if(BUILD_TESTS)
+    pretty_message(INFO "Tests will be built.")
     enable_testing()
     add_subdirectory(tests)
+else()
+    pretty_message(INFO "Tests will not be built.")
 endif()
 
 # for examples 
 option(BUILD_EXAMPLES "Build examples" OFF)
 if(BUILD_EXAMPLES)
+    pretty_message(INFO "Examples will be built.")
     add_subdirectory(examples)
+else()
+    pretty_message(INFO "Examples will not be built.")
 endif()
 
 install(DIRECTORY include/ 

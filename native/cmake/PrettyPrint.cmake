@@ -3,7 +3,11 @@
 
 option(USE_COLORED_MESSAGES "Enable colored messages in CMake output for this project" ON)
 
-string(ASCII 27 ESC)
+# 使用 string(ASCII <n>) 生成字符以解决 “/0” 无效转义序列问题
+string(ASCII 27 ESC) # ESC: 
+                     #   ASCII Code: 27
+                     #   HEX:        0x1B
+                     #   OCT:        033
 
 # --- ANSI 颜色代码定义 ----
 if (USE_COLORED_MESSAGES AND (NOT WIN32 OR CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_COLOR_MAKEFILE))
