@@ -3,7 +3,7 @@ CompileFlags:
     CompilationDatabase: build
 
     FallbackFlags:
-        -std=c++17
+        -std=c++23
 
 # --- 索引编制 ---
 Index:

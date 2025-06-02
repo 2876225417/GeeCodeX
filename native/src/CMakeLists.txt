@@ -50,22 +50,23 @@ if(ANDROID)
     endif()
 endif()
 
-file(GLOB_RECURSE SOURCES "*.cpp")
-# file(GLOB_RECURSE HEADERS "*.h")
+file(GLOB_RECURSE SOURCES 
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "*.cpp"
+)
 
 add_library(${FFI_LIBRARY_NAME} SHARED
     ${SOURCES}
-    # ${HEADERS}
 )
 
 target_compile_definitions(${FFI_LIBRARY_NAME} PRIVATE
-    QWQ_BOOKS_NATIVE_BUILD_SHARED_LIBS)
+    QWQ_BOOKS_NATIVE_BUILD_SHARED_LIBS
+)
 
 target_include_directories(${FFI_LIBRARY_NAME} 
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/include
-
 )
 
 if (ANDROID AND OpenCV_FOUND)
@@ -76,7 +77,6 @@ endif()
 if (ANDROID AND onnxruntime_FOUND)
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${onnxruntime_INCLUDE_DIRS})
-    
 endif() 
 
 target_include_directories(${FFI_LIBRARY_NAME}
@@ -84,7 +84,6 @@ target_include_directories(${FFI_LIBRARY_NAME}
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-
 
 if (ANDROID AND OpenCV_FOUND)
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC 

@@ -3,17 +3,17 @@
 #include <add/add.h>
 #include <exception>
 #include <internal/utils.h>
-#include <opencv2/core.hpp>
-#include <limits>
 #include <iostream>
-#include <onnxruntime_cxx_api.h>
+#include <limits>
 #include <onnxruntime_c_api.h>
+#include <onnxruntime_cxx_api.h>
+#include <opencv2/core.hpp>
 #include <opencv2/core/base.hpp>
 #include <string>
 
 
 namespace add {
-    int add(int a, int b) {
+    auto add(int a, int b) -> int {
     if ((b > 0 && a > std::numeric_limits<int>::max() - b) || 
         (b < 0 && a < std::numeric_limits<int>::min() - b)) {
                 return internal::clamp<int>(
@@ -22,15 +22,15 @@ namespace add {
                     std::numeric_limits<int>::max()
                 );
         }
-    std::cout << "Add(): " << a << "+" << b << std::endl;
+    std::cout << "Add(): " << a << "+" << b << '\n';
     return a + b + 1;
     }
 
-    double add(double a, double b) {
+    auto add(double a, double b) -> double {
         return a + b;
     }
 
-    const char* test_opencv_version() {
+    auto test_opencv_version() -> const char* {
         static std::string version_info;
         try {
             std::string cv_version = cv::getVersionString();
@@ -42,7 +42,7 @@ namespace add {
     }
 
 // ONNXRuntime 测试函数
-    const char* test_onnxruntime_api_version() {
+    auto test_onnxruntime_api_version() -> const char* {
         static std::string ort_version_info_holder; // 用于安全返回 C 字符串
 
         // 获取 OrtApiBase 指针
