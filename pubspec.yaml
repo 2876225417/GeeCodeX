@@ -42,7 +42,6 @@ dependencies:
 
   flutter_heatmap_calendar: ^1.0.5
 
-  flutter_gl: 0.0.21
 
 flutter_launcher_icons: 
   android: "launcher_icon"
