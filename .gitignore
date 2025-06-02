@@ -66,3 +66,4 @@ app.*.map.json
 native/3rdparty/build
 native/3rdparty/opencv
 native/3rdparty/onnxruntime
+native/3rdparty/eigen

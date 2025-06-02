@@ -11,7 +11,6 @@
 #include <opencv2/core/base.hpp>
 #include <string>
 
-
 namespace add {
     auto add(int a, int b) -> int {
     if ((b > 0 && a > std::numeric_limits<int>::max() - b) || 
