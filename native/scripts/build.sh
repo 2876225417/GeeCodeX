@@ -1,8 +1,25 @@
 #!/bin/bash
 
-cd ..
+SCRIPT_DIR_REALPATH=$(dirname "$(realpath "$0")")
 
-NDK_PATH="$HOME/Android/Sdk/ndk/27.1.12297006"
+cd ..
+# 引入颜色输出配置
+if [ -f "${SCRIPT_DIR_REALPATH}/common_color.sh" ]; then
+    source "${SCRIPT_DIR_REALPATH}/common_color.sh"
+else
+    echo "Warning: NOT FOUND common_color.sh, the output will be without color." >&2
+    NC='' RED='' GREEN='' YELLOW='' BLUE='' PURPLE='' CYAN='' WHITE=''
+    BBLACK='' BRED='' BGREEN='' BYELLOW='' BBLUE='' BPURPLE='' BCYAN='' BWHITE=''
+fi
+
+# 引入 NDK 工具链配置 export ANDROID_NDK_HOME
+if [ -f "${SCRIPT_DIR_REALPATH}/common_ndk.sh" ]; then
+    source "${SCRIPT_DIR_REALPATH}/common_ndk.sh"
+else
+    echo -e "${BRED}ERROR: NO ANDROID_NDK_HOME CONFIGURED.${NC}"
+    echo -e "${BYELLOW}Tip: Try to export ANDROID_NDK_HOME="ANDROID NDK Dev Toolchain."${NC}"
+    exit 1
+fi
 
 # Android ABI types
 ABIS=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
@@ -22,7 +39,7 @@ for ABI in "${ABIS[@]}"; do
     mkdir -p "$BUILD_DIR_ABI"
     
     cmake -B $BUILD_DIR_ABI \
-          -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake \
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=$ABI \
           -DANDROID_PLATFORM=android-21 \
           -DCMAKE_INSTALL_PREFIX=$OUTPUT_DIR/$ABI \

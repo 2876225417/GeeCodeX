@@ -1,19 +1,14 @@
-# native/3rdparty/scripts/generate_jam_config.py
 import os
 import sys
 
 def get_env_var(var_name, required=True, default_value=None):
-    # ... (保持不变) ...
     value = os.environ.get(var_name)
     if value is None and default_value is not None:
         value = default_value
     if required and value is None:
-        print(f"错误: 必需的环境变量 '{var_name}' 未设置且无默认值。", file=sys.stderr)
+        print(f"Error: Neccessary environment variables '{var_name}' not set", file=sys.stderr)
         sys.exit(1)
     return value
-
-# native/3rdparty/scripts/generate_jam_config.py
-# ... (get_env_var 函数不变) ...
 
 def generate_jam_content(
     ndk_home,
@@ -25,22 +20,21 @@ def generate_jam_content(
     clang_version_for_jam="17.0"
 ):
     base_toolchain_path = f"{ndk_home}/toolchains/llvm/prebuilt/{host_tag}"
-    clang_c_exe = f"{base_toolchain_path}/bin/clang" # 使用 clang 编译 C
-    clang_cpp_exe = f"{base_toolchain_path}/bin/clang++" # 使用 clang++ 编译 C++
+    clang_c_exe = f"{base_toolchain_path}/bin/clang" 
+    clang_cpp_exe = f"{base_toolchain_path}/bin/clang++" 
     llvm_ar_exe = f"{base_toolchain_path}/bin/llvm-ar"
     llvm_ranlib_exe = f"{base_toolchain_path}/bin/llvm-ranlib"
     sysroot = f"{base_toolchain_path}/sysroot"
     jam_library_name_placeholder = "$(<library-name>)"
 
-    # 通用 C 编译标志 (移除 C++ 特定的)
     common_c_flags = [
         "-fPIC",
         "-O3",
-        "-Wno-unused-parameter", # 对 C 也适用
+        "-Wno-unused-parameter", 
         "-DANDROID",
         f"-isysroot {sysroot}"
     ]
-    # 通用 C++ 编译标志
+
     common_cxx_flags = [
         "-fPIC",
         "-O3",
@@ -50,9 +44,9 @@ def generate_jam_content(
         "-DANDROID",
         f"-isysroot {sysroot}"
     ]
-    # 通用链接标志 (通常对 C 和 C++ 项目都适用，由链接器处理)
+    
     common_link_flags = [
-        "-stdlib=libc++", # 链接时仍然需要指定C++标准库
+        "-stdlib=libc++", 
         f"--sysroot={sysroot}",
         "-Wl,--no-undefined",
         "-Wl,-z,noexecstack"
@@ -75,10 +69,10 @@ import os ;
 
 # --- Toolset for Android arm64-v8a (API {api_arm64}) ---
 using clang : {clang_version_for_jam.split('.')[0]}_android64 
-: # Compiler executable (b2 会根据文件类型选择 C 或 CXX 编译器，如果都指定的话)
-  "{clang_cpp_exe}" # 默认 CXX 编译器
+: # Compiler executable (b2 will make the choice automatically)
+  "{clang_cpp_exe}" 
 : # Options
-  <compiler-c>"{clang_c_exe}" # 指定 C 编译器
+  <compiler-c>"{clang_c_exe}" 
 {common_c_flags_jam}
   <cflags>"-target aarch64-none-linux-android{api_arm64}"
 {common_cxx_flags_jam}
@@ -152,7 +146,7 @@ using clang : {clang_version_for_jam.split('.')[0]}_androidx86_64
     return content
 
 if __name__ == "__main__":
-    # ... (与之前相同的 get_env_var 调用，确保 ENV_CLANG_VERSION_FOR_JAM 被传递) ...
+    # Environment Variables
     ndk_home = get_env_var("ENV_ANDROID_NDK_HOME")
     api_arm64 = get_env_var("ENV_ANDROID_API_ARM64")
     api_arm32 = get_env_var("ENV_ANDROID_API_ARM32")
@@ -170,12 +164,11 @@ if __name__ == "__main__":
         host_tag,
         clang_version_for_jam
     )
-    # ... (与之前相同的写入文件逻辑) ...
     output_filename = "project-config.jam"
     try:
         with open(output_filename, "w") as f:
             f.write(jam_file_content)
-        print(f"'{output_filename}' 已成功生成。")
+        print(f"'{output_filename}' generated. ")
     except IOError as e:
-        print(f"错误: 写入 '{output_filename}' 失败: {e}", file=sys.stderr)
+        print(f"Error: Failed to write '{output_filename}': {e}", file=sys.stderr)
         sys.exit(1)
