@@ -22,6 +22,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 
 
 // Enable Eigen3 to accelerate mat calculating
@@ -38,6 +39,25 @@
 
 struct det_post_args{ cv::Mat resized_img; };
 struct rec_post_args{};
+
+struct detection_output_params {
+    std::vector<float> output_;
+    long height_;
+    long width_;
+};
+
+struct postprocess_pramas {
+    float* output_tensor_;
+    std::vector<int64_t> output_shape_;
+    std::any additional_args_;
+};
+
+struct expand_box_params {
+    std::vector<cv::Point> box_;
+    float horizontal_ratio_;
+    float vertical_ratio_;
+    cv::Size img_shape_;
+};
 
 struct output_values{
     float* output_tensor;
@@ -64,17 +84,11 @@ protected:
     preprocess_eigen(InputType&) = 0;
 #else // DEFAULT
     virtual auto 
-    preprocess(InputType&) 
-    -> std::tuple<std::vector<float>, cv::Mat> = 0;
+    preprocess(InputType&) -> std::tuple<std::vector<float>, cv::Mat> = 0;
 #endif
 
     virtual auto infer(InputType&) -> OutputType = 0;
-    
-    virtual auto
-    postprocess( float*& output_tensor
-               , std::vector<int64_t>& output_shape
-               , const std::any& additional_args
-               ) -> OutputType = 0;
+    virtual auto postprocess(postprocess_pramas) -> OutputType = 0;
 public:
     common_inferer(const std::string& model_path)
         : m_env(ORT_LOGGING_LEVEL_WARNING)
@@ -109,17 +123,15 @@ private:
     std::vector<std::vector<cv::Point>> m_boxes_cache;
 public:
     inline auto
-    postprocess( float*& output_tensor
-               , std::vector<int64_t>& output_shape
-               , const std::any& additional_args) -> std::vector<cv::Mat> override {
-        const auto& args = std::any_cast<det_post_args>(additional_args);
+    postprocess(postprocess_pramas params) -> std::vector<cv::Mat> override {
+        const auto& args = std::any_cast<det_post_args>(params.additional_args_);
         cv::Mat resized_img = args.resized_img;
         std::vector<cv::Mat> croppeds{};
-        long output_h = output_shape[2];
-        long output_w = output_shape[3];
+        long output_h = params.output_shape_[2];
+        long output_w = params.output_shape_[3];
 
-        std::vector<float> output_data(output_tensor, output_tensor + output_w * output_h);
-        auto boxes = process_detection_output(output_data, output_h, output_w);
+        std::vector<float> output_data(params.output_tensor_, params.output_tensor_ + output_w * output_h);
+        auto boxes = process_detection_output({.output_ = output_data, .height_ = output_h, .width_=output_w});
 
         cv::Mat vis_img;
         cv::cvtColor(resized_img, vis_img, cv::COLOR_RGB2BGR);
@@ -131,7 +143,7 @@ public:
             const float horizontal_ratio = 0.2f;
             const float vertical_ratio = 0.5f;
 
-            cv::Rect expanded_rect = expand_box(boxe, horizontal_ratio, vertical_ratio, vis_img.size());
+            cv::Rect expanded_rect = expand_box({.box_=boxe, .horizontal_ratio_=horizontal_ratio, .vertical_ratio_=vertical_ratio, .img_shape_=vis_img.size()});
             cv::Mat  cropped = vis_img(expanded_rect).clone();
             croppeds.push_back(cropped);
         }
@@ -172,7 +184,6 @@ public:
                 m_memory_info, input_tensor_values.data(), input_tensor_values.size(),
                 input_shape.data(), input_shape.size());
 
-            // 运行推理
             std::array<const char*, 1> input_names = {m_input_name.c_str()};
             std::array<const char*, 1> output_names = {m_output_name.c_str()};
             std::vector<Ort::Value> outputs = m_session.Run(
@@ -181,11 +192,11 @@ public:
                     output_names.data(), 1);
 
 
-            // 处理输出
-            auto output_tensor = outputs[0].GetTensorMutableData<float>();
+            
+            auto* output_tensor = outputs[0].GetTensorMutableData<float>();
             auto output_shape = outputs[0].GetTensorTypeAndShapeInfo().GetShape();
             det_post_args args{resized_img}; 
-            return postprocess(output_tensor, output_shape, args);
+            return postprocess({.output_tensor_= output_tensor, .output_shape_=output_shape, .additional_args_=args});
         } catch (const Ort::Exception& e) {
             
         } catch (const std::exception& e) {
@@ -195,7 +206,7 @@ public:
         return det_croppeds;
     }
 
-    #ifdef ENABLE_EIGEN
+    #ifdef ENABLE_EIGEN3
     std::tuple<std::vector<float>, cv::Mat>
     preprocess_eigen(cv::Mat& frame)  override {
         if (frame.empty()) { qDebug() << "Invalid input frame"; }
@@ -234,27 +245,28 @@ public:
         return {m_input_tensor_values, resized_img};
     }
     #else
-    std::tuple<std::vector<float>, cv::Mat>
-    preprocess(cv::Mat& frame) override {
+    auto preprocess(cv::Mat& frame) 
+    ->std::tuple<std::vector<float>, cv::Mat> override {
         if (frame.empty()) {  }
 
         cv::Mat rgb_img;
         cv::cvtColor(frame, rgb_img, cv::COLOR_BGR2RGB);
 
-        int max_size = 960;
+        const int max_size = 960;
         float scale = max_size / static_cast<float>(std::max(rgb_img.cols, rgb_img.rows));
         
-        int new_w = static_cast<int>(rgb_img.cols * scale) / 32 * 32;
-        int new_h = static_cast<int>(rgb_img.rows * scale) / 32 * 32;
+        const int resize_ratio = 32;
+        int new_w = static_cast<int>(rgb_img.cols * scale) / resize_ratio * resize_ratio;
+        int new_h = static_cast<int>(rgb_img.rows * scale) / resize_ratio * resize_ratio;
         cv::Mat resized_img;
         cv::resize(rgb_img, resized_img, cv::Size(new_w, new_h));
 
         cv::Mat float_img;
-        resized_img.convertTo(float_img, CV_32FC3, 1.0 / 255.0);
+        resized_img.convertTo(float_img, CV_32FC3, 1.f / 255.f);
         
-        // 预分配内存
-        if (m_input_tensor_values.size() < 1 * 3 * new_h * new_w) {
-            m_input_tensor_values.resize(1 * 3 * new_h * new_w);
+        // Allocate memory
+        if (static_cast<int>(m_input_tensor_values.size()) < 1 * 3 * new_h * new_w) {
+            m_input_tensor_values.resize(static_cast<unsigned long>(1) * 3 * new_h * new_w);
         }
 
         for (int c = 0; c < 3; c++) {
@@ -269,14 +281,13 @@ public:
     }
     #endif
 
-    inline std::vector<std::vector<cv::Point>>
-    process_detection_output( const std::vector<float>& output
-                            , long height, long width
+    inline auto
+    process_detection_output( detection_output_params det_output 
                             , float threshold = 0.3f
-                            ) {
-        cv::Mat score_map( height, width
+                            ) -> std::vector<std::vector<cv::Point>> {
+        cv::Mat score_map( static_cast<int>(det_output.height_), static_cast<int>(det_output.width_)
                          , CV_32F
-                         , const_cast<float*>(output.data())
+                         , det_output.output_.data()
                          ) ;
 
         cv::Mat binary_map;
@@ -286,42 +297,36 @@ public:
         std::vector<std::vector<cv::Point>> contours;
         cv::findContours(binary_map, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-        // 重用boxes缓存
+        // Reuse boxes cache
         m_boxes_cache.clear();
         m_boxes_cache.reserve(contours.size());
         
         for (const auto& cnt: contours) {
             cv::RotatedRect rect = cv::minAreaRect(cnt);
-            cv::Point2f vertices[4];
-            rect.points(vertices);
+            std::array<cv::Point2f, 4> vertices;
+            rect.points(vertices.data());
 
             std::vector<cv::Point> box;
             box.reserve(4);
-            for (int i = 0; i < 4; i++) {
-                box.push_back(cv::Point( static_cast<int>(vertices[i].x)
-                                       , static_cast<int>(vertices[i].y))
-                                       ) ;
-            }
+            for (int i = 0; i < 4; i++)
+                box.emplace_back( static_cast<int>(vertices[i].x)
+                                , static_cast<int>(vertices[i].y));
             m_boxes_cache.push_back(box);
         }
         return m_boxes_cache;
     }
 
-    inline cv::Rect 
-    expand_box( const std::vector<cv::Point>& box
-              , float horizontal_ratio
-              , float vertical_ratio
-              , const cv::Size& img_shape
-              ) {
-        cv::Rect rect = cv::boundingRect(box);
+    inline auto
+    expand_box(expand_box_params box_params) -> cv::Rect{
+        cv::Rect rect = cv::boundingRect(box_params.box_);
 
-        int dx = static_cast<int>(rect.width * horizontal_ratio);
-        int dy = static_cast<int>(rect.height * vertical_ratio);
+        int dx = static_cast<int>(static_cast<float>(rect.width) * box_params.horizontal_ratio_);
+        int dy = static_cast<int>(static_cast<float>(rect.height) * box_params.vertical_ratio_);
 
         int new_x = std::max(0, rect.x - dx);
         int new_y = std::max(0, rect.y - dy);
-        int new_w = std::min(img_shape.width - new_x, rect.width + 2 * dx);
-        int new_h = std::min(img_shape.height - new_y, rect.height + 2 * dy);
+        int new_w = std::min(box_params.img_shape_.width - new_x, rect.width + 2 * dx);
+        int new_h = std::min(box_params.img_shape_.height - new_y, rect.height + 2 * dy);
 
         return cv::Rect{new_x, new_y, new_w, new_h};
     }
@@ -331,7 +336,7 @@ public:
         : common_inferer<cv::Mat, std::vector<cv::Mat>>(model_path) 
         { }
 
-    std::vector<cv::Mat> run_inf(cv::Mat& frame) { return infer(frame); }
+    auto run_inf(cv::Mat& frame) -> std::vector<cv::Mat> { return infer(frame); }
     void set_det_threshold(float threshold) { }
 };
 
@@ -345,7 +350,7 @@ private:
     std::vector<int> m_sequence_preds;
     std::vector<std::string> m_result_cache;
 
-    void load_chars(const std::string dict_path) {
+    void load_chars(const std::string& dict_path) {
         m_char_dict.clear();
         std::ifstream file(dict_path.c_str());
         std::string line;
@@ -395,23 +400,23 @@ private:
         return {m_input_tensor_values, resized_img};
     }
     #else
-    inline std::tuple<std::vector<float>, cv::Mat>
-    preprocess(cv::Mat& frame) override {
+    inline auto 
+    preprocess(cv::Mat& frame) -> std::tuple<std::vector<float>, cv::Mat> override {
         cv::Mat img = frame.clone();
         if (img.empty()) throw std::runtime_error("Invalid input frame!");
 
         cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
 
-        int width = static_cast<int>(img.cols * (static_cast<float>(TARGET_HEIGHT) / img.rows));
+        int width = static_cast<int>(static_cast<float>(img.cols) * (static_cast<float>(TARGET_HEIGHT) / static_cast<float>(img.rows)));
         
         cv::Mat resized_img;
         cv::resize(img, resized_img, cv::Size(width, TARGET_HEIGHT));
 
         resized_img.convertTo(resized_img, CV_32F, 1.f / 255.f);
 
-        // 预分配内存
-        if (m_input_tensor_values.size() < TARGET_HEIGHT * width * 3) {
-            m_input_tensor_values.resize(TARGET_HEIGHT * width * 3);
+        // Allocate memory
+        if (static_cast<int>(m_input_tensor_values.size()) < TARGET_HEIGHT * width * 3) {
+            m_input_tensor_values.resize(static_cast<unsigned long>(TARGET_HEIGHT) * width * 3);
         }
         
         size_t idx = 0;
@@ -427,15 +432,13 @@ private:
     #endif
 
     // postprocess
-    inline std::string  
-    postprocess( float*& output_tensor
-               , std::vector<int64_t>& output_shape
-               , const std::any& additional_args) override {
+    inline auto  
+    postprocess(postprocess_pramas postprocess_params) -> std::string override {
         m_sequence_preds.clear();
-        int sequence_length = output_shape[1];
-        int num_classes = output_shape[2];
+        long sequence_length = postprocess_params.output_shape_[1];
+        long num_classes = postprocess_params.output_shape_[2];
 
-        #ifdef ENABLE_EIGEN
+        #ifdef ENABLE_EIGEN3
         Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
             output_eigen(output_tensor, sequence_length, num_classes);
 
@@ -450,7 +453,7 @@ private:
             int max_idx = -1;
 
             for (int c = 0; c < num_classes; ++c) {
-                float prob = output_tensor[t * num_classes + c];
+                float prob = postprocess_params.output_tensor_[t * num_classes + c];
                 if (prob > max_prob) {
                     max_prob = prob;
                     max_idx = c;
@@ -521,7 +524,7 @@ private:
             auto output_tensor = outputs[0].GetTensorMutableData<float>();
             auto output_shape = outputs[0].GetTensorTypeAndShapeInfo().GetShape();
     
-            return postprocess(output_tensor, output_shape, {});
+            return postprocess({.output_tensor_=output_tensor, .output_shape_=output_shape, .additional_args_={}});
         } catch (const Ort::Exception& e) {
 
         } catch (const std::exception& e) {

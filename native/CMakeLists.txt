@@ -8,7 +8,7 @@ include(PrettyPrint)
 pretty_message(INFO  "Configuring project: ${PROJECT_NAME} v${PROJECT_VERSION}")
 pretty_message(STAUS "Build type set to: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
