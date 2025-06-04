@@ -89,6 +89,9 @@ add_library(${FFI_LIBRARY_NAME} SHARED
     ${SOURCES}
 )
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${FFI_LIBRARY_NAME} PRIVATE DEBUG)
+endif()
 target_compile_definitions(${FFI_LIBRARY_NAME} PRIVATE
     QWQ_BOOKS_NATIVE_BUILD_SHARED_LIBS
 )

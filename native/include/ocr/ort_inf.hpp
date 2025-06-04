@@ -17,7 +17,6 @@
 #include <opencv2/opencv.hpp>
 
 #include <any>
-#include <chrono>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -487,8 +486,9 @@ private:
     inline std::string
     infer(cv::Mat& frame) override {
         try {
+        #ifdef DBEUG
             auto start_preprocess = std::chrono::high_resolution_clock::now();
-
+        #endif
             cv::Mat resized_img;
             
             #ifdef ENABLE_EIGEN
@@ -496,10 +496,11 @@ private:
             #else
             std::tie(m_input_tensor_values, resized_img) = preprocess(frame);
             #endif
-
+        #ifdef DEBUG
             auto end_preprocess = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_preprocess - start_preprocess);
-            
+        #endif
+        
             std::vector<int64_t> input_shape = {1, 3, resized_img.rows, resized_img.cols};
             
             bool shape_changed = (m_last_input_shape != input_shape);
@@ -512,16 +513,16 @@ private:
                 input_shape.data(), input_shape.size()
             );
 
-            const char* input_names[] = {m_input_name.c_str()};
-            const char* output_names[] = {m_output_name.c_str()};
+            std::array<const char*, 1> input_names = {m_input_name.c_str()};
+            std::array<const char*, 1> output_names = {m_output_name.c_str()}; 
 
             std::vector<Ort::Value> outputs = m_session.Run(
                 Ort::RunOptions{nullptr},
-                input_names, &input_tensor, 1,
-                output_names, 1
+                input_names.data(), &input_tensor, 1,
+                output_names.data(), 1
             );
 
-            auto output_tensor = outputs[0].GetTensorMutableData<float>();
+            auto* output_tensor = outputs[0].GetTensorMutableData<float>();
             auto output_shape = outputs[0].GetTensorTypeAndShapeInfo().GetShape();
     
             return postprocess({.output_tensor_=output_tensor, .output_shape_=output_shape, .additional_args_={}});

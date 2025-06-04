@@ -16,7 +16,7 @@ else
 fi
 
 # NDK 工具链配置
-NDK_PATH="$HOME/Android/Sdk/ndk/27.1.12297006"
+ANDROID_NDK_HOME="$HOME/Android/Sdk/ndk/29.0.13113456"
 DEFAULT_ANDROID_API="android-24"    # 默认 Android API Level
 DEFAULT_CMAKE_BUILD_TYPE="Release"  # 默认 Build Type
 
@@ -58,7 +58,7 @@ fi
 # --- 主构建流程 ---
 echo -e "${BGREEN}Start building Flutter FFI project${NC}"
 echo -e "${GREEN}Target ABI: ${CYAN}$TARGET_ABI${NC}"
-echo -e "${GREEN}NDK directory: ${CYAN}$NDK_PATH${NC}"
+echo -e "${GREEN}NDK directory: ${CYAN}$ANDROID_NDK_HOME${NC}"
 
 # 1. Clean 
 echo -e "${YELLOW}Cleaning build directory: ${BUILD_DIR}${NC}"
@@ -68,7 +68,7 @@ mkdir -p "$BUILD_DIR"
 # 2. Configure
 echo -e "${GREEN}Configuring CMake...${NC}"
 cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
-      -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
+      -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake" \
       -DANDROID_ABI="${TARGET_ABI}" \
       -DANDROID_PLATFORM="${DEFAULT_ANDROID_API}" \
       -DCMAKE_BUILD_TYPE="${DEFAULT_CMAKE_BUILD_TYPE}" \
