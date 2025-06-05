@@ -1,8 +1,20 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(FFI_LIBRARY_NAME "qwq_books_native")
 
-if(ANDROID)
+option(ENABLE_EIGEN3 "Enable Eigen3 for project" ON)
+option(ENABLE_BOOST  "Enable Boost  for project" OFF)
+
+pretty_message(VINFO "======================ENABLE LIBS==============================")
+pretty_message(VINFO "  ENABLE_EIGEN3:  ${ENABLE_EIGEN3}")
+pretty_message(VINFO "  ENABLE_BOOST:   ${ENABLE_BOOST}")
+pretty_message(VINFO "===============================================================")
+
+
+
+
+set(FFI_LIBRARY_NAME "geecodex")
+
+if(ANDROID) # OpenCV
     set(CUSTOM_OPENCV_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/opencv")
 
     set(OpenCV_DIR "${CUSTOM_OPENCV_INSTALL_ROOT_DIR}/opencv_android_${CMAKE_ANDROID_ARCH_ABI}/sdk/native/jni")
@@ -18,13 +30,13 @@ if(ANDROID)
     if (NOT OpenCV_FOUND)
         pretty_message(FATAL_ERROR "Custom OpenCV configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
     else() 
-        pretty_message(SUCCESS "Found OpenCV (${OpenCV_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        pretty_message(SUCCESS "Found OpenCV (Version: ${OpenCV_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
         pretty_message(DEBUG   " OpenCV Include Dirs: ${OpenCV_INCLUDE_DIRS}")
         pretty_message(DEBUG   " OpenCV Libraries: ${OpenCV_LIBS}")
     endif()
 endif()
 
-if(ANDROID)
+if(ANDROID) # ONNXRuntime 
     set(CUSTOM_ONNXRUNTIME_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime")
     
     set(onnxruntime_DIR "${CUSTOM_ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/onnxruntime")
@@ -40,7 +52,7 @@ if(ANDROID)
     if (NOT onnxruntime_FOUND)
         pretty_message(FATAL_ERROR "Custom ONNXRuntime configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
     else() 
-        pretty_message(SUCCESS "Found ONNXRuntime (version ${onnxruntime_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        pretty_message(SUCCESS "Found ONNXRuntime (Version: ${onnxruntime_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
         get_target_property(ORT_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
         get_target_property(ORT_LIBRARIES onnxruntime::onnxruntime INTERFACE_LINK_LIBRARIES)
         pretty_message(DEBUG " ONNXRuntime Include Dirs (from target): ${ORT_INCLUDE_DIRS}")
@@ -50,7 +62,7 @@ if(ANDROID)
     endif()
 endif()
 
-if (ANDROID)
+if (ANDROID AND ENABLE_EIGEN3)
     set(CUSTOM_EIGEN3_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/eigen")
 
     set(EIGEN3_CONFIG_DIR "${CUSTOM_EIGEN3_INSTALL_ROOT_DIR}/share/eigen3/cmake")
@@ -67,7 +79,7 @@ if (ANDROID)
         find_package(Eigen3 REQUIRED)
         
         if (EIGEN3_FOUND)
-            pretty_message(SUCCESS "Found Eigen3 (version ${EIGEN3_VERSION_STRING})")
+            pretty_message(SUCCESS "Found Eigen3 (Version: ${EIGEN3_VERSION_STRING})")
             pretty_message(INFO    "Eigen3 Include Dir: ${EIGEN3_INCLUDE_DIRS}")
             set(EIGEN3_FOUND TRUE)
         else() 
@@ -79,6 +91,35 @@ if (ANDROID)
         set(EIGEN3_FOUND FALSE)
     endif()
 endif()
+
+if (ANDROID AND NOT HAVE_STD_FORMAT) # fmt
+    set(CUSTOM_FMT_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/fmt")
+    
+    set(fmt_DIR "${CUSTOM_FMT_INSTALL_ROOT_DIR}/fmt_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/fmt")
+
+    if (NOT EXISTS "${fmt_DIR}/fmt-config.cmake")
+        pretty_message(FATAL_ERROR "fmt-config.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${FMT_DIR}. Ensure custom {fmt} builds are in native/3rdparty/fmt/ and path is correct")
+    else()
+        pretty_message(INFO "Using fmt_DIR: ${fmt_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+
+    find_package(fmt REQUIRED)
+
+    if (NOT fmt_FOUND)
+        pretty_message(FATAL_ERROR "Custom {fmt} configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+    else() 
+        pretty_message(SUCCESS "Found {fmt} (Version: ${fmt_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        pretty_message(DEBUG   " {fmt} Include Dirs: ${fmt_INCLUDE_DIRS}")
+        pretty_message(DEBUG   " {fmt} Libraries: ${fmt_LIBS}")
+    endif()
+endif()
+
+if (ANDROID AND ENABLE_BOOST) 
+
+
+endif()
+
+
 
 file(GLOB_RECURSE SOURCES 
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -117,6 +158,10 @@ if (ANDROID AND Eigen3_FOUND)
         ${EIGEN3_INCLUDE_DIRS})
 endif()
 
+if (ANDROID AND fmt_FOUND AND NOT HAVE_STD_FORMAT)
+    target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
+        ${fmt_INCLUDE_DIRS})
+endif()
 
 target_include_directories(${FFI_LIBRARY_NAME}
     INTERFACE
@@ -138,6 +183,13 @@ if (ANDROID AND Eigen3_FOUND)
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
         Eigen3::Eigen)
 endif()
+
+if (ANDROID AND fmt_FOUND AND NOT HAVE_STD_FORMAT)
+    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
+        fmt::fmt)
+endif()
+
+
 
 if (ANDROID)
     find_library(GLES_LIB GLESv3 REQUIRED)

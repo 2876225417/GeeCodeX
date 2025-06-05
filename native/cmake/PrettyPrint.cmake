@@ -1,7 +1,7 @@
 
 # 彩色输出 
-
-option(USE_COLORED_MESSAGES "Enable colored messages in CMake output for this project" ON)
+option(USE_CMAKE_COLORED_MESSAGES   "Enable colored messages in CMake output for this project" ON)
+option(USE_CPP_COLORED_DEBUG_OUTPUT "Enable colored messages in Debug output for this project" ON)
 
 # 使用 string(ASCII <n>) 生成字符以解决 “/0” 无效转义序列问题
 string(ASCII 27 ESC) # ESC: 
@@ -10,8 +10,8 @@ string(ASCII 27 ESC) # ESC:
                      #   OCT:        033
 
 # --- ANSI 颜色代码定义 ----
-if (USE_COLORED_MESSAGES AND (NOT WIN32 OR CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_COLOR_MAKEFILE))
-    set(C_RESET     "${ESC}[0m")
+if (USE_CMAKE_COLORED_MESSAGES AND (NOT WIN32 OR CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_COLOR_MAKEFILE))
+    set(C_RESET     "${ESC}[0m" )
     set(C_BLACK     "${ESC}[30m")
     set(C_RED       "${ESC}[31m")
     set(C_GREEN     "${ESC}[32m")
@@ -57,25 +57,29 @@ endif()
 # Defined Type:
 #   STATUS      (蓝色粗体) -  常规状态, 比默认 message(STATUS) 更醒目
 #   INFO        (青色)    -  提供参考信息
+#   VINFO       (黄色)    -  CMake中的变量信息
 #   SUCCESS     (绿色粗体) -  操作成功
 #   WARNING     (黄色粗体) -  警告
-#   ERROR       (红色粗体) - 非致命错误 (使用message(SEND_ERROR))
-#   FATAL_ERROR (红色粗体) - 致命错误 (使用message(FATAL_ERROR))
-#   DEBUG       (洋红色)   - 调试信息 (仅在 CMAKE_BUILD_TYPE 为 Debug 时输出)
+#   ERROR       (红色粗体) -  非致命错误 (使用message(SEND_ERROR))
+#   FATAL_ERROR (红色粗体) -  致命错误 (使用message(FATAL_ERROR))
+#   DEBUG       (洋红色)   -  调试信息 (仅在 CMAKE_BUILD_TYPE 为 Debug 时输出)
 #   IMPORTANT   (洋红粗体)  - 重要提示
-#   DEFAULT     (无颜色)   - 使用 message(STATUS) 默认行为
+#   DEFAULT     (无颜色)   -  使用 message(STATUS) 默认行为
 function(pretty_message TYPE MESSAGE)
     set(PREFIX "")
     set(COLOR  "")
     set(MSG_CMD "STATUS")
 
-    if (USE_COLORED_MESSAGES)
+    if (USE_CMAKE_COLORED_MESSAGES)
         if (${TYPE} STREQUAL "STATUS")
             set(PREFIX  "[STATUS] ")
             set(COLOR   "${C_B_BLUE}")
         elseif (${TYPE} STREQUAL "INFO")
             set(PREFIX  "[INFO] ")
             set(COLOR   "${C_CYAN}")
+        elseif (${TYPE} STREQUAL "VINFO")
+            set(PREFIX  "[VINFO]")
+            set(COLOR   "${C_YELLOW}")
         elseif (${TYPE} STREQUAL "SUCCESS")
             set(PREFIX  "[SUCCESS] ")
             set(COLOR   "${C_B_GREEN}")
@@ -126,5 +130,57 @@ function(pretty_message TYPE MESSAGE)
     endif()
 endfunction()
 
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+    include(CheckCXXSourceCompiles)
+    set(STD_FORMAT_TEST
+    "
+    #include <format>
+    #include <string>
+    #if !defined(__cpp_lib_format) || __cpp_lib_format < 201907L
+    #endif
+
+    int main() {
+        std::string s = std::format(\"Hello, {}!\", \"world\");
+        (void)s;
+        return 0;
+    }
+    "
+    )
+    # Store them in case of 'check_cxx_source_compiles's side effect 
+    set(CMAKE_REQUIRED_FLAGS_     ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_LIBRARIES_ ${CMAKE_REQUIRED_LIBRARIES})
+
+    check_cxx_source_compiles("${STD_FORMAT_TEST}" _HAS_STD_FORMAT)
+
+    # Restore
+    set(CMAKE_REQUIRED_FLAGS      ${CMAKE_REQUIRED_FLAGS_})
+    set(CMAKE_REQUIRED_LIBRARIES  ${CMAKE_REQUIRED_LIBRARIES_})
+
+
+    if (_HAS_STD_FORMAT)    # Enable cpp std format 
+        set(HAVE_STD_FORMAT ON CACHE INTERNAL "std::format is avaible")
+    
+    else() 
+        set(HAVE_STD_FORMAT OFF CACHE INTERNAL "std::format is unavaible")
+    endif()
+endif()
+
+if (HAVE_STD_FORMAT)
+    add_compile_definitions(USE_STD_FMT=1)
+else()
+    add_compile_definitions(USE_EXTERNAL_FMT=1)
+endif()
+
+if (USE_CPP_COLORED_DEBUG_OUTPUT)
+    add_compile_definitions(USE_CPP_COLORED_DEBUG_OUTPUT=1)
+endif()
+
+
+
 # Debug
-pretty_message(INFO "PrettyPrint.cmake module loaded.")
+pretty_message(INFO  "PrettyPrint.cmake module loaded.")
+pretty_message(VINFO "======================Pretty Message Info======================")
+pretty_message(VINFO "   USE_CMAKE_COLORED_MESSAGES:    ${USE_CMAKE_COLORED_MESSAGES} ")
+pretty_message(VINFO "   USE_CPP_COLORED_DEBUG_OUTPUT:  ${USE_CPP_COLORED_DEBUG_OUTPUT} ")
+pretty_message(VINFO "   HAVE_STD_FORMAT:               ${HAVE_STD_FORMAT}")
+pretty_message(VINFO "===============================================================")
