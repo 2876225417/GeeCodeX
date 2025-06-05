@@ -2,6 +2,7 @@
 # 彩色输出 
 option(USE_CMAKE_COLORED_MESSAGES   "Enable colored messages in CMake output for this project" ON)
 option(USE_CPP_COLORED_DEBUG_OUTPUT "Enable colored messages in Debug output for this project" ON)
+option(ENABLE_EXTERNAL_FMT          "Enable external {fmt} (even though std fmt is available)" ON)
 
 # 使用 string(ASCII <n>) 生成字符以解决 “/0” 无效转义序列问题
 string(ASCII 27 ESC) # ESC: 
@@ -165,8 +166,13 @@ if (CMAKE_CXX_STANDARD GREATER_EQUAL 20)
     endif()
 endif()
 
+
 if (HAVE_STD_FORMAT)
-    add_compile_definitions(USE_STD_FMT=1)
+    if (ENABLE_EXTERNAL_FMT)
+        add_compile_definitions(USE_EXTERNAL_FMT=1)
+    else()
+        add_compile_definitions(USE_STD_FMT=1)
+    endif()
 else()
     add_compile_definitions(USE_EXTERNAL_FMT=1)
 endif()
@@ -176,11 +182,13 @@ if (USE_CPP_COLORED_DEBUG_OUTPUT)
 endif()
 
 
-
 # Debug
 pretty_message(INFO  "PrettyPrint.cmake module loaded.")
 pretty_message(VINFO "======================Pretty Message Info======================")
-pretty_message(VINFO "   USE_CMAKE_COLORED_MESSAGES:    ${USE_CMAKE_COLORED_MESSAGES} ")
-pretty_message(VINFO "   USE_CPP_COLORED_DEBUG_OUTPUT:  ${USE_CPP_COLORED_DEBUG_OUTPUT} ")
-pretty_message(VINFO "   HAVE_STD_FORMAT:               ${HAVE_STD_FORMAT}")
+pretty_message(VINFO "  USE_CMAKE_COLORED_MESSAGES:     ${USE_CMAKE_COLORED_MESSAGES} ")
+pretty_message(VINFO "  USE_CPP_COLORED_DEBUG_OUTPUT:   ${USE_CPP_COLORED_DEBUG_OUTPUT} ")
+pretty_message(VINFO "  ENABLE_EXTERNAL_FMT:            ${ENABLE_EXTERNAL_FMT}")
+if (NOT ENABLE_EXTERNAL_FMT)
+pretty_message(VINFO "  HAVE_STD_FORMAT:                ${HAVE_STD_FORMAT}")
+endif()
 pretty_message(VINFO "===============================================================")

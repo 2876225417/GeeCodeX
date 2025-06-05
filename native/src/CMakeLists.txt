@@ -92,9 +92,9 @@ if (ANDROID AND ENABLE_EIGEN3)
     endif()
 endif()
 
-if (ANDROID AND NOT HAVE_STD_FORMAT) # fmt
+if (ANDROID AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT)) # fmt
     set(CUSTOM_FMT_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/fmt")
-    
+        
     set(fmt_DIR "${CUSTOM_FMT_INSTALL_ROOT_DIR}/fmt_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/fmt")
 
     if (NOT EXISTS "${fmt_DIR}/fmt-config.cmake")
@@ -158,7 +158,7 @@ if (ANDROID AND Eigen3_FOUND)
         ${EIGEN3_INCLUDE_DIRS})
 endif()
 
-if (ANDROID AND fmt_FOUND AND NOT HAVE_STD_FORMAT)
+if (ANDROID AND fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${fmt_INCLUDE_DIRS})
 endif()
@@ -184,7 +184,7 @@ if (ANDROID AND Eigen3_FOUND)
         Eigen3::Eigen)
 endif()
 
-if (ANDROID AND fmt_FOUND AND NOT HAVE_STD_FORMAT)
+if (ANDROID AND fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
         fmt::fmt)
 endif()

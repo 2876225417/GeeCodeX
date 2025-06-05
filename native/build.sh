@@ -78,6 +78,7 @@ cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
       -DUSE_CPP_COLORED_DEBUG_OUTPUT=ON \
       -DENABLE_EIGEN3=ON \
       -DENABLE_BOOST=OFF \
+      -DENABLE_EXTERNAL_FMT=ON \
 
 # 3. Build
 echo -e "${GREEN}Building...${NC}"
