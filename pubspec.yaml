@@ -26,6 +26,7 @@ dependencies:
   get_it: ^7.6.0
 
   syncfusion_flutter_pdfviewer: ^28.2.11
+  pdf_combiner: 4.3.3
   path: ^1.9.0
   url_launcher: ^6.3.0
 

@@ -17,7 +17,7 @@ def generate_jam_content(
     api_x86,
     api_x86_64,
     host_tag="linux-x86_64",
-    clang_version_for_jam="17.0"
+    clang_version_for_jam="20.0"
 ):
     base_toolchain_path = f"{ndk_home}/toolchains/llvm/prebuilt/{host_tag}"
     clang_c_exe = f"{base_toolchain_path}/bin/clang" 
@@ -38,7 +38,7 @@ def generate_jam_content(
     common_cxx_flags = [
         "-fPIC",
         "-O3",
-        "-std=c++17",
+        "-std=c++20",
         "-stdlib=libc++",
         "-Wno-unused-parameter",
         "-DANDROID",

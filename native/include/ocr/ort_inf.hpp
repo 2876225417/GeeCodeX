@@ -103,7 +103,7 @@ public:
         m_session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
         m_session_options.AddConfigEntry("session.use_device_allocator_for_initializers", "1"); 
         m_session_options.EnableCpuMemArena();
-        //m_session_options.DisableCpuMemArena(); This option might cause memory leak!!!
+        //m_session_options.DisableCpuMemArena(); // This option might cause memory leak!!!
         m_session = Ort::Session(m_env, model_path.c_str(), m_session_options);
 
         Ort::AllocatorWithDefaultOptions allocator;

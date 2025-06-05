@@ -2,8 +2,6 @@
 # Flutter Screenshots
 flutter_*.png
 
-
-
 # Miscellaneous
 *.class
 *.log
@@ -66,7 +64,8 @@ app.*.map.json
 native/3rdparty/source/
 native/3rdparty/build/
 
-native/3rdparty/opencv
-native/3rdparty/onnxruntime
-native/3rdparty/eigen
-native/3rdparty/boost
+native/3rdparty/opencv/
+native/3rdparty/onnxruntime/
+native/3rdparty/eigen/
+native/3rdparty/boost/
+native/3rdparty/fmt/
