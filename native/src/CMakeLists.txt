@@ -9,9 +9,6 @@ pretty_message(VINFO "  ENABLE_EIGEN3:  ${ENABLE_EIGEN3}")
 pretty_message(VINFO "  ENABLE_BOOST:   ${ENABLE_BOOST}")
 pretty_message(VINFO "===============================================================")
 
-
-
-
 set(FFI_LIBRARY_NAME "geecodex")
 
 if(ANDROID) # OpenCV
