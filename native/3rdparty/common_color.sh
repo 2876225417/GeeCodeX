@@ -1,5 +1,5 @@
 
-# 控制台文本输出颜色控制
+# 控制台文本输出颜色控制(底部自定义变量一览)
 
 # ANSI Color Codes
 # 使用方法: echo -e "${GREEN}这是绿色文本${NC}"
@@ -37,4 +37,3 @@ ON_BLUE='\033[44m'
 ON_PURPLE='\033[45m'
 ON_CYAN='\033[46m'
 ON_WHITE='\033[47m'
-

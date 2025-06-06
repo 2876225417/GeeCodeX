@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 使用自定义环境变量
+
 SCRIPT_DIR_REALPATH=$(dirname "$(realpath "$0")")
 
 # 引入颜色输出配置
@@ -12,6 +14,15 @@ else
 fi
 
 # 配置 SDK路径 和 NDK 工具链 
+# ANDROID_SDK_HOME
+DEFAULT_SDK_HOME="$HOME/Android/Sdk"
+if [ -d "$DEFAULT_SDK_HOME" ]; then 
+    export ANDROID_SDK_HOME="$DEFAULT_SDK_HOME"
+else 
+    echo -e "${BRED}Error: ANDROID_SDK_HOME not set, and not found in common directory.${NC}"
+    return 1
+fi
+
 # ANDROID_NDK_HOME
 DEFAULT_NDK_PATH="$HOME/Android/Sdk/ndk/27.1.12297006" 
 ALTERNATIVE_NDK_PATH="$HOME/Android/Sdk/ndk/29.0.13113456"
@@ -22,15 +33,6 @@ elif [ -d "$DEFAULT_NDK_PATH" ]; then
     export ANDROID_NDK_HOME="$DEFAULT_NDK_PATH"
 else 
     echo -e "${BRED}Error: Android_NDK_HOME not set, and not found in common directory.${NC}"
-    return 1
-fi
-
-# ANDROID_SDK_HOME
-DEFAULT_SDK_HOME="$HOME/Android/Sdk"
-if [ -d "$DEFAULT_SDK_HOME" ]; then 
-    export ANDROID_SDK_HOME="$DEFAULT_SDK_HOME"
-else 
-    echo -e "${BRED}Error: ANDROID_SDK_HOME not set, and not found in common directory.${NC}"
     return 1
 fi
 
@@ -74,9 +76,40 @@ if [ -x "$CLANG_COMPILER_PATH" ]; then
 else
     CLANG_VERSION_STRING="NOT FOUND clang++ IN SPECIFIED PATH: $CLANG_COMPILER_PATH OR NOT EXECUTABLE" 
 fi
-
 export CLANG_VERSION_STRING
+
+echo ""
+echo -e "${BGREEN}--- Loading Host Compiler Information ---${NC}"
+HOST_GCC_PATH=$(which gcc || echo "Not Found")
+HOST_GXX_PATH=$(which g++ || echo "Not Found")
+HOST_CLANG_PATH=$(which clang || echo "Not Found")
+HOST_CLANGXX_PATH=$(which clang++ || echo "Not Found")
+
+HOST_GCC_VERSION="Unknown"
+HOST_CLANG_VERSION="Unknown"
+
+if [ "$HOST_GCC_PATH" != "Not Found" ] && [ -x "$HOST_GXX_PATH" ]; then
+    HOST_GCC_VERSION=$("$HOST_GXX_PATH" --version | head -n 1)
+fi
+
+if [ "$HOST_CLANG_PATH" != "Not Found" ] && [ -x "$HOST_CLANGXX_PATH" ]; then
+    HOST_CLANG_VERSION=$("$HOST_CLANGXX_PATH" --version | head -n 1)
+fi
+
+export HOST_GCC_PATH
+export HOST_GXX_PATH
+export HOST_GCC_VERSION
+export HOST_CLANG_PATH
+export HOST_CLANGXX_PATH
+export HOST_CLANG_VERSION
+
 
 
 
 return 0
+
+
+
+
+
+
