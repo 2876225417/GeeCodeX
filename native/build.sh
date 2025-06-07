@@ -37,6 +37,7 @@ mkdir -p "${TEST_LOG_FILE_DIR}"
 mkdir -p "${BUILD_LOG_FILE_DIR}"
 
 # ---- 运行参数 ----
+BUILD_WITH_CLEAN="on"   # 构建前是否清空构建目录(默认:on)
 BUILD_TESTS="off"       # 是否构建测试(默认:off)
 BUILD_EXAMPLES="off"    # 是否构建用例(默认:off)
 BUILD_TYPE="Release"    # 构建类型(默认:Release)
@@ -51,6 +52,8 @@ print_usage() {
     echo -e "   ${CYAN}--arch=<ARCH>                ${NC}       Specify the target architecture."
     echo -e "   Supported Android ABIs: ${GREEN}armeabi-v7a, arm64-v8a, x86, x86_64{$NC}"
     echo -e "   Supported Native  Arch: ${GREEN}linux-x86_64${NC}"
+    echo ""
+    echo -e "   ${CYAN}--build_with_clean=<on|off>  ${NC}       Enable or disable building after clean. Default is '${BUILD_WITH_CLEAN}'"
     echo ""
     echo -e "   ${CYAN}--build_tests=<on|off>       ${NC}       Enable or disable building tests. Default is '${BUILD_TESTS}'"
     echo -e "   ${YELLOW}Note: If 'on', the architecture is automatically set to 'linux-x86_64'.${NC}"
@@ -70,6 +73,9 @@ print_usage() {
     echo ""
     echo -e "   ${YELLOW}Example (Android cross-compile):               ${NC}"
     echo -e "   ${CYAN}$0 --arch=arm64_v8a                              ${NC}"
+    echo ""
+    echo -e "   ${YELLOW}Example (Build before clean):                  ${NC}"
+    echo -e "   ${CYAN}$0 --build_with_clean=on                         ${NC}"
     echo ""
     echo -e "   ${YELLOW}Example (Native Linux build with tests):       ${NC}"
     echo -e "   ${CYAN}$0 --build_tests=on                              ${NC}"
@@ -138,6 +144,10 @@ for i in "$@"; do
         BUILD_TYPE="${i#*=}"
         shift
         ;;
+        --build_with_clean=*)
+        BUILD_WITH_CLEAN="${i#*=}"
+        shift
+        ;;
         -h|--help)
         print_usage
         exit 0
@@ -150,6 +160,10 @@ for i in "$@"; do
         ;;
     esac
 done
+
+if [[ "$BUILD_WITH_CLEAN" == "on" ]] || [ "$BUILD_WITH_CLEAN" == "ON"]; then
+    echo -e "${YELLOW}Info: Build will be executed before clean the build directory.${NC}"
+fi
 
 if [[ "$BUILD_TESTS" == "on" ]]; then
     if [[ -n "$TARGET_ARCH" && "$TARGET_ARCH" != "linux-x86_64" ]]; then
@@ -199,14 +213,17 @@ if [ "$TARGET_ARCH" != "linux-x86_64" ]; then
     echo -e "${BGREEN}Start building tests for host${NC}"
 else
     echo -e "${BGREEN}Start building Flutter FFI project${NC}"
-    echo -e "${GREEN}Target ABI: ${CYAN}$TARGET_ABI${NC}"
+    echo -e "${GREEN}Target ABI: ${CYAN}$TARGET_ARCH${NC}"
     echo -e "${GREEN}NDK directory: ${CYAN}$ANDROID_NDK_HOME${NC}"
 fi
 
 # 1. Clean 
-echo -e "${YELLOW}Cleaning build directory: ${BUILD_DIR}${NC}"
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
+BUILD_WITH_CLEAN_FLAGS="${BUILD_WITH_CLEAN^^}"
+if [ "$BUILD_WITH_CLEAN_FLAGS" == "ON" ]; then
+    echo -e "${YELLOW}Cleaning build directory: ${BUILD_DIR}${NC}"
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+fi
 
 # 2. Configure
 echo -e "${GREEN}Configuring CMake...${NC}"
@@ -260,7 +277,6 @@ if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
         TEST_LOG_FILE="${TEST_LOG_FILE_DIR}/$(date).txt"
         SAVE_TESTS_LOGS_FLAGS="${SAVE_TESTS_LOGS^^}"
 
-
         if [ "$SAVE_TESTS_LOGS_FLAGS" == "ON" ]; then
             if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
                 CTEST_EXIT_CODE=0
@@ -286,12 +302,11 @@ if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
         fi
     fi
 
-    
     if [[ "$BUILD_EXMAPLES_CMAKE" == "ON" ]]; then
         echo -e "${CYAN}Generated example dir...${NC}"
 
     fi
 else
     echo ""
-    echo -e "${BGREEN}ABI ${TARGET_ABI} Project's building is finished!${NC}"
+    echo -e "${BGREEN}ABI ${TARGET_ARCH} Project's building is finished!${NC}"
 fi

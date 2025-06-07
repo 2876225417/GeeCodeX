@@ -114,7 +114,8 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
         "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR_ABI}"
         "-DFMT_TEST=OFF"
         "-DFMT_DOC=OFF"
-        "-DBUILD_SHARED_LIBS=ON"        
+        "-DBUILD_SHARED_LIBS=ON"
+        "-DCMAKE_CXX_STANDRAD=23"   
     )
 
     if [ "$CURRENT_ABI" != "linux-x86_64" ]; then 
