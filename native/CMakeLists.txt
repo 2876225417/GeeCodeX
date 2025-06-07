@@ -15,14 +15,16 @@ include(PrettyPrint)
 
 pretty_message(INFO  "Configuring project: ${PROJECT_NAME} v${PROJECT_VERSION}")
 pretty_message(VINFO "======================Compiler Info============================")
-pretty_message(VINFO "  CMAKE_TOOLCHAIN_FILE:         ${CMAKE_TOOLCHAIN_FILE}")
-pretty_message(VINFO "  CMAKE_CXX_STANDARD:           ${CMAKE_CXX_STANDARD}")
-pretty_message(VINFO "  CMAKE_CXX_COMPILER:           ${CMAKE_CXX_COMPILER}")
-pretty_message(VINFO "  CMAKE_CXX_COMPILER_VERSION:   ${CMAKE_CXX_COMPILER_VERSION}")
-pretty_message(VINFO "  CMAKE_CXX_BYTE_ORDER:         ${CMAKE_CXX_BYTE_ORDER}")
-pretty_message(VINFO "  CMAKE_CXX_COMPILER_ABI:       ${CMAKE_CXX_COMPILER_ABI}")
-pretty_message(VINFO "  CMAKE_BUILD_TYPE:             ${CMAKE_BUILD_TYPE}")
-pretty_message(VINFO "  BUILD_TESTS:                  ${BUILD_TESTS}")
+if (ANDROID)
+pretty_message(VINFO "  CMAKE_TOOLCHAIN_FILE:           ${CMAKE_TOOLCHAIN_FILE}")
+endif()
+pretty_message(VINFO "  CMAKE_CXX_STANDARD:             ${CMAKE_CXX_STANDARD}")
+pretty_message(VINFO "  CMAKE_CXX_COMPILER:             ${CMAKE_CXX_COMPILER}")
+pretty_message(VINFO "  CMAKE_CXX_COMPILER_VERSION:     ${CMAKE_CXX_COMPILER_VERSION}")
+pretty_message(VINFO "  CMAKE_CXX_BYTE_ORDER:           ${CMAKE_CXX_BYTE_ORDER}")
+pretty_message(VINFO "  CMAKE_CXX_COMPILER_ABI:         ${CMAKE_CXX_COMPILER_ABI}")
+pretty_message(VINFO "  CMAKE_BUILD_TYPE:               ${CMAKE_BUILD_TYPE}")
+pretty_message(VINFO "  BUILD_TESTS:                    ${BUILD_TESTS}")
 pretty_message(VINFO "===============================================================")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -40,6 +42,21 @@ endif()
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(src)
+
+# for debug
+if (CMAKE_BUILD_TYPE MATCHES "[Dd]eb")
+    pretty_message(INFO "cpptrace will be built for build type with debug info.")
+    include(FetchContent)
+    FetchContent_Declare(
+        cpptrace
+        GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+        GIT_TAG        v0.8.3 
+    )
+    FetchContent_MakeAvailable(cpptrace)
+    add_compile_definitions(BUILD_DEBUG=1)
+endif()
+
+
 
 # for tests
 option(BUILD_TESTS "Build tests" OFF)

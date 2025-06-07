@@ -27,54 +27,88 @@ else
     exit 1
 fi
 DEFAULT_ANDROID_API="android-24"    # 默认 Android API Level
-DEFAULT_CMAKE_BUILD_TYPE="Release"  # 默认 Build Type
 BUILD_DIR="${SCRIPT_DIR}/build"     
 
 # 此处使用默认生成的测试路径
 TEST_DIR="${SCRIPT_DIR}/build/tests/"
 TEST_LOG_FILE_DIR="${SCRIPT_DIR}/tests/logs"
+BUILD_LOG_FILE_DIR="${SCRIPT_DIR}/logs"
 mkdir -p "${TEST_LOG_FILE_DIR}"
+mkdir -p "${BUILD_LOG_FILE_DIR}"
 
 # ---- 运行参数 ----
-BUILD_TESTS="off"    # 是否构建测试(默认:off)
-SAVE_LOGS="off"      # 是否保存测试日志(默认:off)
-TARGET_ARCH=""       # 编译架构
+BUILD_TESTS="off"       # 是否构建测试(默认:off)
+BUILD_EXAMPLES="off"    # 是否构建用例(默认:off)
+BUILD_TYPE="Release"    # 构建类型(默认:Release)
+SAVE_TESTS_LOGS="off"   # 是否保存测试日志(默认:off)
+SAVE_BUILD_LOGS="off"   # 是否保存构建日志(默认:off)
+TARGET_ARCH=""          # 编译架构
 
 print_usage() {
     echo -e "${YELLOW}Usage: $0 [OPTIONS]${NC}"
     echo ""
     echo -e "${YELLOW}Options: ${NC}"
-    echo -e "   ${CYAN}--arch=<ARCH>${NC}           Specify the target architecture."
+    echo -e "   ${CYAN}--arch=<ARCH>                ${NC}       Specify the target architecture."
     echo -e "   Supported Android ABIs: ${GREEN}armeabi-v7a, arm64-v8a, x86, x86_64{$NC}"
     echo -e "   Supported Native  Arch: ${GREEN}linux-x86_64${NC}"
     echo ""
-    echo -e "   ${CYAN}--build_tests=<on|off>${NC}  Enable or disable building tests. Default is 'off'."
+    echo -e "   ${CYAN}--build_tests=<on|off>       ${NC}       Enable or disable building tests. Default is '${BUILD_TESTS}'"
     echo -e "   ${YELLOW}Note: If 'on', the architecture is automatically set to 'linux-x86_64'.${NC}"
     echo ""
-    echo -e "   ${CYAN}--save_logs=<on|off>${NC}  Enable or disable saving tests logs. Default is 'off'."
+    echo -e "   ${CYAN}--build_examples=<on|off>    ${NC}       Enable or disable building examples. Default is '${BUILD_EXAMPLES}'."
+    echo -e "   ${YELLOW}Note: If 'on', the architecture is automatically set to 'linux-x86_64'.${NC}"
+    echo ""
+    echo -e "   ${CYAN}--build_type=<TYPE>          ${NC}       Switch build type. Default is 'Release'."
+    echo -e "   Supported Build Type: ${GREEN}Release, Debug, MinSizeRelWithDebInfo, RelWithDebInfo. Default is 'Release'.${NC}"
+    echo ""
+    echo -e "   ${CYAN}--save_tests_logs=<on|off>   ${NC}       Enable or disable saving tests logs. Default is 'off'."
     echo -e "   ${YELLOW}Note: If 'on', the test logs will be saved to ${TEST_LOG_FILE_DIR}.${NC}"
-    echo -e "   ${CYAN}-h, --help${NC}              Show this help message."
     echo ""
-    echo -e "   ${YELLOW}Example (Android cross-compile):${NC}"
-    echo -e "   ${CYAN}$0 --arch=arm64_v8a${NC}"
+    echo -e "   ${CYAN}--save_build_logs=<on|off>   ${NC}       Enable or disable saving build logs. Default is 'off'."
+    echo -e "   ${YELLOW}Note: If 'on', the test logs will be saved to ${TEST_LOG_FILE_DIR}.${NC}"
+    echo -e "   ${CYAN}-h, --help${NC}                Show this help message."
     echo ""
-    echo -e "   ${YELLOW}Example (Native Linux build with tests):${NC}"
-    echo -e "   ${CYAN}$0 --build_tests=on${NC}"
+    echo -e "   ${YELLOW}Example (Android cross-compile):               ${NC}"
+    echo -e "   ${CYAN}$0 --arch=arm64_v8a                              ${NC}"
     echo ""
-    echo -e "   ${YELLOW}Example (Save tests log):${NC}"
-    echo -e "   ${CYAN}$0 --save_logs=on${NC}"
+    echo -e "   ${YELLOW}Example (Native Linux build with tests):       ${NC}"
+    echo -e "   ${CYAN}$0 --build_tests=on                              ${NC}"
+    echo ""
+    echo -e "   ${YELLOW}Example (Native Linux build with examples):    ${NC}"
+    echo -e "   ${CYAN}$0 --build_examples=on                           ${NC}"
+    echo ""
+    echo -e "   ${YELLOW}Example (Specify native Linux build type):     ${NC}"
+    echo -e "   ${CYAN}$0 --build_type=Release                          ${NC}"
+    echo ""
+    echo -e "   ${YELLOW}Example (Save build log):                      ${NC}"
+    echo -e "   ${CYAN}$0 --save_build_logs=on                          ${NC}"
+    echo ""
+    echo -e "   ${YELLOW}Example (Save tests log if enable build_tests):${NC}"
+    echo -e "   ${CYAN}$0 --save_test_logs=on                           ${NC}"
 }
 
 is_supported_arch() {
     local abi_to_check="$1"
     case "$abi_to_check" in
         "armeabi-v7a" | "arm64-v8a" | "x86" | "x86_64" | "linux-x86_64")
-            return 0    # true, 支持
+            return 0    # true, 支持该 abi
             ;;
         *)
-            return 1    # false, 不支持
+            return 1    # false, 不支持该 abi
             ;;
     esac 
+}
+
+is_spported_build_type() {
+    local build_type_check="$1"
+    case "$build_type_check" in
+        "Release" | "Debug" | "RelWithDebInfo" | "MinSizeRelWithDebInfo")
+            return 0    # true， 支持该   build type
+            ;;
+        *)
+            return 1    # false，不支持该 build type
+            ;;
+    esac
 }
 
 # --- 解析运行参数 ---
@@ -88,8 +122,20 @@ for i in "$@"; do
         BUILD_TESTS="${i#*=}"
         shift
         ;;
-        --save_logs=*)
-        SAVE_LOGS="${i#*=}"
+        --build_exmaples=*)
+        BUILD_EXAMPLES="${i#*=}"
+        shift
+        ;;
+        --save_tests_logs=*)
+        SAVE_TESTS_LOGS="${i#*=}"
+        shift
+        ;;
+        --save_build_logs=*)
+        SAVE_BUILD_LOGS="${i#*=}"
+        shift
+        ;;
+        --build_type=*)
+        BUILD_TYPE="${i#*=}"
         shift
         ;;
         -h|--help)
@@ -112,8 +158,19 @@ if [[ "$BUILD_TESTS" == "on" ]]; then
     TARGET_ARCH="linux-x86_64"
 fi
 
-if [[ "$SAVE_LOGS" == "on" ]]; then
+if [[ "$BUILD_EXAMPLES" == "on" ]]; then
+    if [[ -n "$TARGET_ARCH" && "$TARGET_ARCH" != "linux-x86_64" ]]; then
+        echo -e "${YELLOW}Warning: --build_examples=on overrides arch. Forcing architecture to 'linux-x86_64'.${NC}"
+    fi
+    TARGET_ARCH="linux-x86_64"
+fi
+
+if [[ "$SAVE_TESTS_LOGS" == "on" ]]; then
     echo -e "${YELLOW}Info: Tests info will be saved to file ${TEST_LOG_FILE_DIR}"
+fi
+
+if [[ "$SAVE_BUILD_LOGS" == "on" ]]; then
+    echo -e "${YELLOW}Info: Tests info will be saved to file ${BUILD_LOG_FILE_DIR}"
 fi
 
 if [ -z "$TARGET_ARCH" ]; then
@@ -126,6 +183,15 @@ if ! is_supported_arch "$TARGET_ARCH"; then
     echo -e "${BRED}Error: Unsupported architecture '$TARGET_ARCH'.${NC}"
     print_usage
     exit 1
+fi
+
+if [ -z "$BUILD_TYPE" ]; then
+    echo -e "${RED}Warning: Build type not specified. Default build type '$BUILD_TYPE' will be used,or use --build_type=<TYPE> to specify build type.${NC}" 
+fi
+
+if ! is_spported_build_type "$BUILD_TYPE"; then
+    echo -e "${BRED}Warning: Unsupported build type  '$BUILD_TYPE'. ${NC}"
+    echo -e "${CYAN}Info: Build type set as default: '$BUILD_TYPE'. ${NC}"    
 fi
 
 # --- 主构建流程 ---
@@ -146,12 +212,13 @@ mkdir -p "$BUILD_DIR"
 echo -e "${GREEN}Configuring CMake...${NC}"
 
 BUILD_TESTS_CMAKE="${BUILD_TESTS^^}"
+BUILD_EXMAPLES_CMAKE="${BUILD_EXAMPLES^^}"
 CMAKE_COMMON_ARGS=(
     -S "${SCRIPT_DIR}"
     -B "${BUILD_DIR}"
-    -DCMAKE_BUILD_TYPE="${DEFAULT_CMAKE_BUILD_TYPE}"
+    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
     -DBUILD_TESTS=${BUILD_TESTS_CMAKE}
-    -DBUILD_EXAMPLES=OFF
+    -DBUILD_EXAMPLES=${BUILD_EXMAPLES_CMAKE}
     -DUSE_CMAKE_COLORED_MESSAGES=ON
     -DUSE_CPP_COLORED_DEBUG_OUTPUT=ON
     -DENABLE_EIGEN3=ON
@@ -186,35 +253,43 @@ cmake --build "${BUILD_DIR}" --config "${DEFAULT_CMAKE_BUILD_TYPE}" --parallel $
 
 if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
 
+    if [[ "$BUILD_TESTS_CMAKE" == "ON" ]]; then
+        echo -e "${YELLOW}Generated test dir: ${TEST_DIR}${NC}"
+        echo -e "${YELLOW}--- Running test: ctest --test_dir ${TEST_DIR} --verbose ---${NC}"
+    
+        TEST_LOG_FILE="${TEST_LOG_FILE_DIR}/$(date).txt"
+        SAVE_TESTS_LOGS_FLAGS="${SAVE_TESTS_LOGS^^}"
 
-    echo -e "${YELLOW}Generated test dir: ${TEST_DIR}${NC}"
-    echo -e "${YELLOW}--- Running test: ctest --test_dir ${TEST_DIR} --verbose ---${NC}"
-    
-    
-    TEST_LOG_FILE="${TEST_LOG_FILE_DIR}/$(date).txt"
-    
-    if [ "$SAVE_LOGS" == "on" ]; then
-        if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
-            CTEST_EXIT_CODE=0
+
+        if [ "$SAVE_TESTS_LOGS_FLAGS" == "ON" ]; then
+            if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
+                CTEST_EXIT_CODE=0
+            else
+                CTEST_EXIT_CODE=$?
+            fi
         else
-            CTEST_EXIT_CODE=$?
+            if ctest --test-dir ${TEST_DIR} --verbose ; then
+                CTEST_EXIT_CODE=0
+            else
+                CTEST_EXIT_CODE=$?
+            fi
         fi
-    else
-        if ctest --test-dir ${TEST_DIR} --verbose ; then
-            CTEST_EXIT_CODE=0
+
+        if [ "$CTEST_EXIT_CODE" -ne 0 ]; then
+            echo -e "${BRED}ERROR: FAILED TO CTEST EXECUTED.${NC}"
+            echo -e "${BRED}Please check testing log: ${TEST_LOG_FILE}.${NC}"
         else
-            CTEST_EXIT_CODE=$?
+            echo -e "${BYELLOW}SUCCESS: CTEST EXECUTED SUCCESSFULLY.${NC}"
+            if [ "$SAVE_LOGS" == "on" ]; then
+                echo -e "${BYELLOW}More info please check log: ${TEST_LOG_FILE}.${NC}"
+            fi
         fi
     fi
 
-    if [ "$CTEST_EXIT_CODE" -ne 0 ]; then
-        echo -e "${BRED}ERROR: FAILED TO CTEST EXECUTED.${NC}"
-        echo -e "${BRED}Please check testing log: ${TEST_LOG_FILE}.${NC}"
-    else
-        echo -e "${BYELLOW}SUCCESS: CTEST EXECUTED SUCCESSFULLY.${NC}"
-        if [ "$SAVE_LOGS" == "on" ]; then
-            echo -e "${BYELLOW}More info please check log: ${TEST_LOG_FILE}.${NC}"
-        fi
+    
+    if [[ "$BUILD_EXMAPLES_CMAKE" == "ON" ]]; then
+        echo -e "${CYAN}Generated example dir...${NC}"
+
     fi
 else
     echo ""
