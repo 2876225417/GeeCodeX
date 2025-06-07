@@ -22,8 +22,8 @@ pretty_message(VINFO "  CMAKE_CXX_COMPILER_VERSION:   ${CMAKE_CXX_COMPILER_VERSI
 pretty_message(VINFO "  CMAKE_CXX_BYTE_ORDER:         ${CMAKE_CXX_BYTE_ORDER}")
 pretty_message(VINFO "  CMAKE_CXX_COMPILER_ABI:       ${CMAKE_CXX_COMPILER_ABI}")
 pretty_message(VINFO "  CMAKE_BUILD_TYPE:             ${CMAKE_BUILD_TYPE}")
+pretty_message(VINFO "  BUILD_TESTS:                  ${BUILD_TESTS}")
 pretty_message(VINFO "===============================================================")
-
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)

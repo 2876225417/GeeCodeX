@@ -11,105 +11,192 @@ pretty_message(VINFO "==========================================================
 
 set(FFI_LIBRARY_NAME "geecodex")
 
-if(ANDROID) # OpenCV
-    set(CUSTOM_OPENCV_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/opencv")
+# ==== OpenCV find_package 配置开始 ====
+pretty_message(INFO "===== OpenCV Configurations =====")
+set(OPENCV_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/opencv")
+if (BUILD_TESTS)
+    set(OpenCV_DIR "${OPENCV_INSTALL_ROOT_DIR}/opencv_linux-x86_64/lib/cmake/opencv4")
+elseif(ANDROID)
+    set(OpenCV_DIR "${OPENCV_INSTALL_ROOT_DIR}/opencv_android_${CMAKE_ANDROID_ARCH_ABI}/sdk/native/jni")
+endif()
 
-    set(OpenCV_DIR "${CUSTOM_OPENCV_INSTALL_ROOT_DIR}/opencv_android_${CMAKE_ANDROID_ARCH_ABI}/sdk/native/jni")
-
-    if (NOT EXISTS "${OpenCV_DIR}/OpenCVConfig.cmake")
+if (NOT EXISTS "${OpenCV_DIR}/OpenCVConfig.cmake")
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "OpenCVConfig.cmake NOT FOUND for platform: Linux-x86_64 at path: ${OpenCV_DIR}. Ensure custom OpenCV builds are in native/3rdparty/opencv/ and path is correct")
+    elseif (ANDROID)
         pretty_message(FATAL_ERROR "OpenCVConfig.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${OpenCV_DIR}. Ensure custom OpenCV builds are in native/3rdparty/opencv/ and path is correct")
-    else()
-        pretty_message(INFO "Using OpenCV_DIR: ${OpenCV_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
     endif()
-
-    find_package(OpenCV REQUIRED COMPONENTS world)
-    
-    if (NOT OpenCV_FOUND)
-        pretty_message(FATAL_ERROR "Custom OpenCV configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
-    else() 
-        pretty_message(SUCCESS "Found OpenCV (Version: ${OpenCV_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
-        pretty_message(DEBUG   " OpenCV Include Dirs: ${OpenCV_INCLUDE_DIRS}")
-        pretty_message(DEBUG   " OpenCV Libraries: ${OpenCV_LIBS}")
+else()
+    if (BUILD_TESTS)    
+        pretty_message(INFO "Using OpenCV_DIR: ${OpenCV_DIR} for platform: Linux-x86_64")
+    elseif (ANDROID)
+        pretty_message(INFO "Using OpenCV_DIR: ${OpenCV_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
     endif()
 endif()
 
-if(ANDROID) # ONNXRuntime 
-    set(CUSTOM_ONNXRUNTIME_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime")
-    
-    set(onnxruntime_DIR "${CUSTOM_ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/onnxruntime")
-    
-    if (NOT EXISTS "${onnxruntime_DIR}/onnxruntimeConfig.cmake")
+if (BUILD_TESTS)
+    find_package(OpenCV REQUIRED)
+elseif(ANDROID)
+    find_package(OpenCV REQUIRED COMPONENTS world)
+endif()
+
+if (NOT OpenCV_FOUND)
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "Custom OpenCV configuration failed for platform: Linux-x86_64.")
+    elseif(ANDROID)
+        pretty_message(FATAL_ERROR "Custom OpenCV configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+    endif()
+else() 
+    if (BUILD_TESTS)
+        pretty_message(SUCCESS "Found OpenCV (Version: ${OpenCV_VERSION}) for platform: Linux-x86_64")
+    elseif (ANDROID)
+        pretty_message(SUCCESS "Found OpenCV (Version: ${OpenCV_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+    pretty_message(DEBUG   " OpenCV Include Dirs: ${OpenCV_INCLUDE_DIRS}")
+    pretty_message(DEBUG   " OpenCV Libraries: ${OpenCV_LIBS}")
+endif()
+pretty_message(INFO "=================================")
+# OpenCV find_package 配置结束
+
+# ONNXRuntime find_package 配置开始
+pretty_message(INFO "===== ONNXRuntime Configurations =====")
+set(ONNXRUNTIME_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime")
+
+
+
+if (BUILD_TESTS)
+    set(onnxruntime_DIR "${ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_linux-x86_64/lib64/cmake/onnxruntime")
+elseif(ANDROID)
+    set(onnxruntime_DIR "${ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/onnxruntime")
+endif()
+
+if (NOT EXISTS "${onnxruntime_DIR}/onnxruntimeConfig.cmake")
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "onnxruntimeConfig.cmake NOT FOUND for platform: Linux-x86_64 at path: ${onnxruntime_DIR}. Ensure custom ONNXRuntime builds are in native/3rdparty/onnxruntime/ and path is correct")
+    elseif (ANDROID)
         pretty_message(FATAL_ERROR "onnxruntimeConfig.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${onnxruntime_DIR}. Ensure custom ONNXRuntime builds are in native/3rdparty/onnxruntime/ and path is correct")
-    else()
+    endif()
+else()
+    if (BUILD_TESTS)    
+        pretty_message(INFO "Using onnxruntime_DIR: ${onnxruntime_DIR} for platform: ")
+    elseif (ANDROID)
         pretty_message(INFO "Using onnxruntime_DIR: ${onnxruntime_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
     endif()
+endif()
 
-    find_package(onnxruntime REQUIRED)
+find_package(onnxruntime REQUIRED)
 
-    if (NOT onnxruntime_FOUND)
-        pretty_message(FATAL_ERROR "Custom ONNXRuntime configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
-    else() 
-        pretty_message(SUCCESS "Found ONNXRuntime (Version: ${onnxruntime_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+if (NOT onnxruntime_FOUND)
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "ONNXRuntime configuration failed for platform: Linux-x86_64.")
+    elseif (ANDROID)
+        pretty_message(FATAL_ERROR "ONNXRuntime configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+    endif()
+else() 
+    if (BUILD_TESTS)
+        pretty_message(SUCCESS "Found ONNXRuntime (Version: ${onnxruntime_VERSION}) for platform: Linux-x86_64")
+    elseif (ANDROID)
         get_target_property(ORT_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
         get_target_property(ORT_LIBRARIES onnxruntime::onnxruntime INTERFACE_LINK_LIBRARIES)
         pretty_message(DEBUG " ONNXRuntime Include Dirs (from target): ${ORT_INCLUDE_DIRS}")
         pretty_message(DEBUG " ONNXRuntime Libraries (from target): ${ORT_LIBRARIES}")
-        pretty_message(DEBUG " ONNXRuntime_INCLUDE_DIRS (variable): ${onnxruntime_INCLUDE_DIRS}")
-        pretty_message(DEBUG " ONNXRuntime_LIBRARIES (variable): ${onnxruntime_LIBRARIES}")
+        pretty_message(SUCCESS "Found ONNXRuntime (Version: ${onnxruntime_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+    pretty_message(DEBUG " ONNXRuntime_INCLUDE_DIRS: ${onnxruntime_INCLUDE_DIRS}")
+    pretty_message(DEBUG " ONNXRuntime_LIBRARIES: ${onnxruntime_LIBRARIES}")
+endif()
+pretty_message(INFO "======================================")
+# ONNXRuntime find_package 配置结束
+
+# Eigen3 find_package 配置开始
+pretty_message(INFO "===== Eigen3 Configurations =====")
+set(EIGEN3_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/eigen3")
+if (BUILD_TESTS)
+    set(Eigen3_DIR "${EIGEN3_INSTALL_ROOT_DIR}/eigen3_host/eigen3/share/eigen3/cmake")
+elseif(ANDROID)
+    set(Eigen3_DIR "${EIGEN3_INSTALL_ROOT_DIR}/eigen3_android/eigen3/share/eigen3/cmake")
+endif()
+
+if (NOT EXISTS "${Eigen3_DIR}/Eigen3Config.cmake")
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "Eigen3Config.cmake NOT FOUND for platform: Linux-x86_64 at path: ${Eigen3_DIR}. Ensure custom Eigen3 builds are in native/3rdparty/eigen3/ and path is correct")
+    elseif (ANDROID)
+        pretty_message(FATAL_ERROR "Eigen3Config.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${Eigen3_DIR}. Ensure custom Eigen3 builds are in native/3rdparty/eigen3/ and path is correct")
+    endif()
+else()
+    if (BUILD_TESTS)    
+        pretty_message(INFO "Using Eigen3_DIR: ${Eigen3_DIR} for platform: Linux-x86_64")
+    elseif (ANDROID)
+        pretty_message(INFO "Using Eigen3_DIR: ${Eigen3_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
     endif()
 endif()
 
-if (ANDROID AND ENABLE_EIGEN3)
-    set(CUSTOM_EIGEN3_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/eigen")
+find_package(Eigen3 REQUIRED)
 
-    set(EIGEN3_CONFIG_DIR "${CUSTOM_EIGEN3_INSTALL_ROOT_DIR}/share/eigen3/cmake")
-    set(EIGEN3_DIR "")
 
-    if (EXISTS "${EIGEN3_CONFIG_DIR}/Eigen3Config.cmake")
-        pretty_message(INFO "Found Eigen3config.cmake")
-        set(Eigen3_DIR "${EIGEN3_CONFIG_DIR}")
+if (NOT Eigen3_FOUND)
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "Eigen3 configuration failed for platform: Linux-x86_64.")
+    elseif(ANDROID)
+        pretty_message(FATAL_ERROR "Eigen3 configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
     endif()
-
-    if (NOT Eigen3_DIR STREQUAL "")
-        pretty_message(INFO "Attempting to find Eigen3 using Eigen3_DIR: ${Eigen3_DIR}")
-        
-        find_package(Eigen3 REQUIRED)
-        
-        if (EIGEN3_FOUND)
-            pretty_message(SUCCESS "Found Eigen3 (Version: ${EIGEN3_VERSION_STRING})")
-            pretty_message(INFO    "Eigen3 Include Dir: ${EIGEN3_INCLUDE_DIRS}")
-            set(EIGEN3_FOUND TRUE)
-        else() 
-            pretty_message(FATAL_ERROR "find_package(Eigen3 REQUIRED) failed even though EIGEN3_CONFIG_DIR was set to ${EIGEN3_CONFIG_DIR}")
-            set(EIGEN3_FOUND FALSE)
-        endif()
-    else()
-        pretty_message(WARNING "Eigen3 CMake configuration directory (Eigen3Config.cmake) not found")
-        set(EIGEN3_FOUND FALSE)
+else() 
+    if (BUILD_TESTS)
+        pretty_message(SUCCESS "Found Eigen3 (Version: ${EIGEN3_VERSION_STRING}) for platform: Linux-x86_64")
+    elseif (ANDROID)
+        pretty_message(SUCCESS "Found Eigen3 (Version: ${EIGEN3_VERSION_STRING}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
     endif()
+    pretty_message(DEBUG   " Eigen3 Include Dirs: ${EIGEN3_INCLUDE_DIRS}")
+    pretty_message(DEBUG   " Eigen3 Libraries: ${EIGEN3_LIBS}")
 endif()
+pretty_message(INFO "=================================")
+# Eigen3 find_package 配置结束
 
-if (ANDROID AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT)) # fmt
-    set(CUSTOM_FMT_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/fmt")
-        
-    set(fmt_DIR "${CUSTOM_FMT_INSTALL_ROOT_DIR}/fmt_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/fmt")
+# fmt find_package 配置开始
+pretty_message(INFO "===== fmt Configurations =====")
+set(FMT_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/fmt")
+if (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT)
+    if (BUILD_TESTS)
+        set(fmt_DIR "${FMT_INSTALL_ROOT_DIR}/fmt_linux-x86_64/lib/cmake/fmt")
+    elseif(ANDROID)
+        set(fmt_DIR "${FMT_INSTALL_ROOT_DIR}/fmt_android_${CMAKE_ANDROID_ARCH_ABI}/lib/cmake/fmt")
+    endif()
 
     if (NOT EXISTS "${fmt_DIR}/fmt-config.cmake")
-        pretty_message(FATAL_ERROR "fmt-config.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${FMT_DIR}. Ensure custom {fmt} builds are in native/3rdparty/fmt/ and path is correct")
+        if (BUILD_TESTS)
+            pretty_message(FATAL_ERROR "fmt-config.cmake NOT FOUND for platform: Linux-x86_64 at path: ${fmt_DIR}. Ensure custom fmt builds are in native/3rdparty/fmt/ and path is correct")
+        elseif (ANDROID)
+            pretty_message(FATAL_ERROR "fmt-config.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${fmt_DIR}. Ensure custom fmt builds are in native/3rdparty/fmt/ and path is correct")
+        endif()
     else()
-        pretty_message(INFO "Using fmt_DIR: ${fmt_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        if (BUILD_TESTS)    
+            pretty_message(INFO "Using fmt_DIR: ${fmt_DIR} for platform: Linux-x86_64")
+        elseif (ANDROID)
+            pretty_message(INFO "Using fmt_DIR: ${fmt_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        endif()
     endif()
 
     find_package(fmt REQUIRED)
 
     if (NOT fmt_FOUND)
-        pretty_message(FATAL_ERROR "Custom {fmt} configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+        if (BUILD_TESTS)
+            pretty_message(FATAL_ERROR "fmt configuration failed for platform: Linux-x86_64.")
+        elseif(ANDROID)
+            pretty_message(FATAL_ERROR "fmt configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+        endif()
     else() 
-        pretty_message(SUCCESS "Found {fmt} (Version: ${fmt_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
-        pretty_message(DEBUG   " {fmt} Include Dirs: ${fmt_INCLUDE_DIRS}")
-        pretty_message(DEBUG   " {fmt} Libraries: ${fmt_LIBS}")
+        if (BUILD_TESTS)
+            pretty_message(SUCCESS "Found fmt (Version: ${fmt_VERSION}) for platform: Linux-x86_64")
+        elseif (ANDROID)
+            pretty_message(SUCCESS "Found fmt (Version: ${fmt_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+        endif()
+        pretty_message(DEBUG   " fmt Include Dirs: ${fmt_INCLUDE_DIRS}")
+        pretty_message(DEBUG   " fmt Libraries: ${fmt_LIBS}")
     endif()
 endif()
+pretty_message(INFO "==============================")
+# fmt find_package 配置结束
+
 
 if (ANDROID AND ENABLE_BOOST) 
 
@@ -140,22 +227,22 @@ target_include_directories(${FFI_LIBRARY_NAME}
     ${CMAKE_SOURCE_DIR}/include
 )
 
-if (ANDROID AND OpenCV_FOUND)
+if (OpenCV_FOUND)
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${OpenCV_INCLUDE_DIRS})
 endif()
 
-if (ANDROID AND onnxruntime_FOUND)
+if (onnxruntime_FOUND)
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${onnxruntime_INCLUDE_DIRS})
 endif() 
 
-if (ANDROID AND Eigen3_FOUND)
+if (Eigen3_FOUND)
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${EIGEN3_INCLUDE_DIRS})
 endif()
 
-if (ANDROID AND fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
+if (fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${fmt_INCLUDE_DIRS})
 endif()
@@ -166,22 +253,22 @@ target_include_directories(${FFI_LIBRARY_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
-if (ANDROID AND OpenCV_FOUND)
+if (OpenCV_FOUND)
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC 
         ${OpenCV_LIBS})
 endif()
 
-if (ANDROID AND onnxruntime_FOUND)
+if (onnxruntime_FOUND)
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC 
         onnxruntime::onnxruntime)
 endif() 
 
-if (ANDROID AND Eigen3_FOUND)
+if (Eigen3_FOUND)
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
         Eigen3::Eigen)
 endif()
 
-if (ANDROID AND fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
+if (fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
         fmt::fmt)
 endif()

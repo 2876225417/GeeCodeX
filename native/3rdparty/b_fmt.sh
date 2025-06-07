@@ -16,10 +16,8 @@ else
 fi
 
 # 引入 NDK 工具链配置 
-# export ANDROID_NDK_HOME
-# export ANDROID_SDK_HOME
-if [ -f "${SCRIPT_DIR_REALPATH}/common_ndk.sh" ]; then
-    source "${SCRIPT_DIR_REALPATH}/common_ndk.sh"
+if [ -f "${SCRIPT_DIR_REALPATH}/common_env.sh" ]; then
+    source "${SCRIPT_DIR_REALPATH}/common_env.sh"
     if [ $? -ne 0 ] || [ -z "$ANDROID_NDK_HOME" ] || [ -z "$ANDROID_SDK_HOME" ]; then
         echo -e "${BRED}Error: NDK or SDK path not set by common_ndk.sh ${NC}" >&2
         exit 1
@@ -54,7 +52,7 @@ FMT_INSTALL_ROOT_DIR="${SCRIPT_BASE_DIR}/fmt"
 FMT_BUILD_CONFIG="Release"  # 或者 Debug, RelWithDebInfo
 
 # 针对不同的 架构 及API Level
-ABIS_TO_BUILD=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
+ABIS_TO_BUILD=("armeabi-v7a" "arm64-v8a" "x86" "x86_64" "linux-x86_64")
 ANDROID_API_ARM32="21"
 ANDROID_API_ARM64="24"
 ANDROID_API_X86="24"
@@ -77,22 +75,28 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
     echo ""
     echo -e "${BPURPLE}================================================================${NC}"
     CURRENT_API_LEVLE=""
-    case "$CURRENT_ABI" in
-        "armeabi-v7a")  CURRENT_API_LEVLE="$ANDROID_API_ARM32"  ;;
-        "arm64-v8a")    CURRENT_API_LEVLE="$ANDROID_API_ARM64"  ;;
-        "x86")          CURRENT_API_LEVLE="$ANDROID_API_X86"    ;;
-        "x86_64")       CURRENT_API_LEVLE="$ANDROID_API_X86_64" ;;
-        *)
-            echo -e "${BRED}Error: Not supported ABI: '$CURRENT_ABI'${NC}"
-            continue
-            ;;
-    esac
-    
+    if [ "$CURRENT_ABI" != "linux-x86_64" ]; then
+        case "$CURRENT_ABI" in
+            "armeabi-v7a")  CURRENT_API_LEVLE="$ANDROID_API_ARM32"  ;;
+            "arm64-v8a")    CURRENT_API_LEVLE="$ANDROID_API_ARM64"  ;;
+            "x86")          CURRENT_API_LEVLE="$ANDROID_API_X86"    ;;
+            "x86_64")       CURRENT_API_LEVLE="$ANDROID_API_X86_64" ;;
+            *)
+                echo -e "${BRED}Error: Not supported ABI: '$CURRENT_ABI'${NC}"
+                continue
+                ;;
+        esac
+    fi
+
     echo -e "${BPURPLE}--- Building {fmt} for ABI ${CYAN}$CURRENT_ABI${BPURPLE}, Target API Level: $CURRENT_API_LEVLE ---${NC}"
     echo -e "${BPURPLE}================================================================${NC}"
     
     BUILD_DIR_ABI="${FMT_BUILD_ROOT_DIR}/fmt_build_android_${CURRENT_ABI}"
-    INSTALL_DIR_ABI="${FMT_INSTALL_ROOT_DIR}/fmt_android_${CURRENT_ABI}"
+    if [ "$CURRENT_ABI" = "linux-x86_64" ]; then
+        INSTALL_DIR_ABI="${FMT_INSTALL_ROOT_DIR}/fmt_${CURRENT_ABI}"
+    else
+        INSTALL_DIR_ABI="${FMT_INSTALL_ROOT_DIR}/fmt_android_${CURRENT_ABI}"
+    fi
     LOG_FILE_FOR_ABI="${LOG_ROOT_DIR}/build_fmt_${CURRENT_ABI}.log"
 
     echo "fmt Build Log for ABI: $CURRENT_ABI - $(date)" > "${LOG_FILE_FOR_ABI}"
@@ -105,18 +109,23 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
 
     echo -e "${BLUE}--- Configuring CMake {fmt} for ABI ${CURRENT_ABI}(Log file: ${LOG_FILE_FOR_ABI}) ---${NC}"
     
+
     CMAKE_ARGS=(
-        "-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
-        "-DANDROID_NDK=${ANDROID_NDK_HOME}"
-        "-DANDROID_ABI=${CURRENT_ABI}"
-        "-DANDROID_PLATFORM=android-${CURRENT_API_LEVLE}"
-        "-DCMAKE_ANDROID_ARCH_ABI=${CURRENT_ABI}"
-        "-DCMAKE_ANDROID_STL=c++_shared"
         "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR_ABI}"
         "-DFMT_TEST=OFF"
         "-DFMT_DOC=OFF"
-        "-DBUILD_SHARED_LIBS=ON"
+        "-DBUILD_SHARED_LIBS=ON"        
     )
+
+    if [ "$CURRENT_ABI" != "linux-x86_64" ]; then 
+        CMAKE_ARGS+=(
+            "-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
+            "-DANDROID_NDK=${ANDROID_NDK_HOME}"
+            "-DANDROID_ABI=${CURRENT_ABI}"
+            "-DANDROID_PLATFORM=android-${CURRENT_API_LEVLE}"
+            "-DCMAKE_ANDROID_ARCH_ABI=${CURRENT_ABI}"
+        )
+    fi
 
     echo "CMake Configurations: " >> "$LOG_FILE_FOR_ABI"
     echo "cmake -S \"$FMT_SOURCE_DIR_FULL_PATH\" -B \"$BUILD_DIR_ABI\" ${CMAKE_ARGS[*]}" >> "$LOG_FILE_FOR_ABI"
@@ -169,11 +178,20 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
                 fi
                 
                 echo "Build Configuration: Release (via CMake)"                 >> "$REPORT_FILE"
-                echo "NDK Path: $ANDROID_NDK_HOME"                              >> "$REPORT_FILE"
-                echo "NDK Version (fom source.properties): $NDK_VERSION_STRING" >> "$REPORT_FILE"
-                echo "CLANG_CXX_COMPILER: $CLANG_COMPILER_PATH"                 >> "$REPORT_FILE"
-                echo "CLANG_C_COMPILER: $CLANG_C_COMPILER_PATH"                 >> "$REPORT_FILE"
-                echo "Clang Version: $CLANG_VERSION_STRING"                     >> "$REPORT_FILE"
+                if [ "$CURRENT_ABI" != "linux-x86_64" ]; then
+                    echo "NDK Path: $ANDROID_NDK_HOME"                              >> "$REPORT_FILE"
+                    echo "NDK Version (fom source.properties): $NDK_VERSION_STRING" >> "$REPORT_FILE"
+                    echo "CLANG_CXX_COMPILER: $CLANG_COMPILER_PATH"                 >> "$REPORT_FILE"
+                    echo "CLANG_C_COMPILER: $CLANG_C_COMPILER_PATH"                 >> "$REPORT_FILE"
+                    echo "Clang Version: $CLANG_VERSION_STRING"                     >> "$REPORT_FILE"
+                else
+                    echo "HOST_GCC_PATH: $HOST_GCC_PATH"                            >> "$REPORT_FILE"
+                    echo "HOST_GXX_PATH: $HOST_GXX_PATH"                            >> "$REPORT_FILE"
+                    echo "HOST_GCC_VERSION: $HOST_GCC_VERSION"                      >> "$REPORT_FILE"
+                    echo "HOST_CLANG_PATH: $HOST_CLANG_PATH"                        >> "$REPORT_FILE"
+                    echo "HOST_CLANGXX_PATH: $HOST_CLANGXX_PATH"                    >> "$REPORT_FILE"
+                    echo "HOST_CLANG_VERSION: $HOST_CLANG_VERSION" 
+                fi
                 
                 echo ""                                                         >> "$REPORT_FILE"
                 echo "CMake Arguments Used: "                                   >> "$REPORT_FILE"

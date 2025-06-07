@@ -13,8 +13,8 @@ else
 fi
 
 # 引入 NDK 工具链配置 export ANDROID_NDK_HOME
-if [ -f "${SCRIPT_DIR_REALPATH}/common_ndk.sh" ]; then
-    source "${SCRIPT_DIR_REALPATH}/common_ndk.sh"
+if [ -f "${SCRIPT_DIR_REALPATH}/common_env.sh" ]; then
+    source "${SCRIPT_DIR_REALPATH}/common_env.sh"
 else
     echo -e "${BRED}ERROR: NO ANDROID_NDK_HOME CONFIGURED.${NC}"
     echo -e "${BYELLOW}Tip: Try to export ANDROID_NDK_HOME="ANDROID NDK Dev Toolchain."${NC}"

@@ -24,10 +24,8 @@ else
 fi
 
 # 引入 NDK 工具链配置 
-# export ANDROID_NDK_HOME
-# export ANDROID_SDK_HOME
-if [ -f "${SCRIPT_DIR_REALPATH}/common_ndk.sh" ]; then
-    source "${SCRIPT_DIR_REALPATH}/common_ndk.sh"
+if [ -f "${SCRIPT_DIR_REALPATH}/common_env.sh" ]; then
+    source "${SCRIPT_DIR_REALPATH}/common_env.sh"
     if [ $? -ne 0 ] || [ -z "$ANDROID_NDK_HOME" ] || [ -z "$ANDROID_SDK_HOME" ]; then
         echo -e "${BRED}Error: NDK or SDK path not set by common_ndk.sh ${NC}" >&2
         exit 1
@@ -51,10 +49,10 @@ ONNXRUNTIME_SOURCE_DIR_FULL_PATH="${ONNXRUNTIME_SOURCE_PARENT_DIR}/${ONNXRUNTIME
 
 # 安装和构建路径
 ONNXRUNTIME_INSTALL_ROOT_DIR="${SCRIPT_BASE_DIR}/onnxruntime"
-
 ONNXRUNTIME_BUILD_CONFIG="MinSizeRel"   # Or Release, RelWithDebInfo
+ONNXRUNTIME_HOST_BUILD_CONFIG="Release"
 
-ABIS_TO_BUILD=("armeabi-v7a" "arm64-v8a" "x86" "x86_64" "linux-x86_64")
+ABIS_TO_BUILD=("armeabi-v7a" "arm64-v8a" "x86" "x86_64")
 DEFAULT_ANDROID_API="24"
 
 HOST_TAG="linux-x86_64"
@@ -83,14 +81,17 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
     echo -e ""
     echo -e "${YELLOW}=====================================================================================${NC}"
     if [ "$CURRENT_ABI" = "linux-x86_64" ]; then
-        echo -e "${YELLOW}Start building ONNXRuntime for ABI: $CURRENT_ABI${NC}"
+        echo -e "${YELLOW}Start building ONNXRuntime for platform: $CURRENT_ABI${NC}"
     else 
         echo -e "${YELLOW}Start building ONNXRuntime for ABI: $CURRENT_ABI, target API: $DEFAULT_ANDROID_API${NC}"
     fi
     echo -e "${YELLOW}=====================================================================================${NC}"
    
-
-    local INSTALL_DIR_ABI="${ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_android_${CURRENT_ABI}"
+    if [ "$CURRENT_ABI" = "linux-x86_64" ]; then
+        local INSTALL_DIR_ABI="${ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_${CURRENT_ABI}"
+    else
+        local INSTALL_DIR_ABI="${ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_android_${CURRENT_ABI}"
+    fi
     mkdir -p "${INSTALL_DIR_ABI}/lib"
     mkdir -p "${INSTALL_DIR_ABI}/include"
 
@@ -106,15 +107,14 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
     ORT_BUILD_LOG_FILE_DIR="${SCRIPT_BASE_DIR}/logs/onnxruntime"
     mkdir -p "${ORT_BUILD_LOG_FILE_DIR}"
     LOG_FILE_FOR_ABI="${ORT_BUILD_LOG_FILE_DIR}/build_onnxruntime_${CURRENT_ABI}.log"
-    
 
     if [ "$CURRENT_ABI" = "linux-x86_64" ]; then
         BUILD_ARGS=(
-            "--config" "${ONNXRUNTIME_BUILD_CONFIG}"
-            "--parallel" "$(nproc)"
-            "--build_shared_lib"
+            "--config" "Release"
+            "--parallel"
+            "--update"
+            "--build"
             "--skip_tests"
-            "--use_xnnpack"
         )
     else 
         BUILD_ARGS=(
@@ -171,16 +171,23 @@ for CURRENT_ABI in "${ABIS_TO_BUILD[@]}"; do
             echo "ONNXRuntime Git Commit: $GIT_COMMIT_HASH" >> "$REPORT_FILE"
         fi
         echo "Build Configuration: $ONNXRUNTIME_BUILD_CONFIG" >> "$REPORT_FILE"
-        echo "Android API Level: $DEFAULT_ANDROID_API" >> "$REPORT_FILE"
-        echo "NDK Path: $ANDROID_NDK_HOME" >> "$REPORT_FILE"
-        echo "NDK Version (from source.properties): $NDK_VERSION_STRING" >> "$REPORT_FILE"
-        
-        # 编译器信息
-        echo "NDK Compiler"                                 >> "$REPORT_FILE"
-        echo "CLANG_CXX_COMPILER: $CLANG_COMPILER_PATH"     >> "$REPORT_FILE"
-        echo "CLANG_C_COMPILER: $CLANG_C_COMPILER_PATH"     >> "$REPORT_FILE"
-        echo "Clang Version: $CLANG_VERSION_STRING"         >> "$REPORT_FILE"
-        echo "=============================================">> "$REPORT_FILE"
+        if [ "$CURRENT_ABI" = "linux-x86_64" ]; then
+            echo "HOST_GCC_PATH: $HOST_GCC_PATH"                            >> "$REPORT_FILE"
+            echo "HOST_GXX_PATH: $HOST_GXX_PATH"                            >> "$REPORT_FILE"
+            echo "HOST_GCC_VERSION: $HOST_GCC_VERSION"                      >> "$REPORT_FILE"
+            echo "HOST_CLANG_PATH: $HOST_CLANG_PATH"                        >> "$REPORT_FILE"
+            echo "HOST_CLANGXX_PATH: $HOST_CLANGXX_PATH"                    >> "$REPORT_FILE"
+            echo "HOST_CLANG_VERSION: $HOST_CLANG_VERSION"                  >> "$REPORT_FILE"
+        else
+            echo "Android API Level: $DEFAULT_ANDROID_API" >> "$REPORT_FILE"
+            echo "NDK Path: $ANDROID_NDK_HOME" >> "$REPORT_FILE"
+            echo "NDK Version (from source.properties): $NDK_VERSION_STRING" >> "$REPORT_FILE"
+            echo "NDK Compiler"                                 >> "$REPORT_FILE"
+            echo "CLANG_CXX_COMPILER: $CLANG_COMPILER_PATH"     >> "$REPORT_FILE"
+            echo "CLANG_C_COMPILER: $CLANG_C_COMPILER_PATH"     >> "$REPORT_FILE"
+            echo "Clang Version: $CLANG_VERSION_STRING"         >> "$REPORT_FILE"
+            echo "=============================================">> "$REPORT_FILE"
+        fi
         echo "Build Script Arguments Used: "                >> "$REPORT_FILE"
         printf " %s\n" "${BUILD_ARGS[@]}"                   >> "$REPORT_FILE"
         echo -e "${GREEN}Build report generated :${REPORT_FILE}${NC}"
@@ -201,4 +208,3 @@ echo -e "${YELLOW}All ONNXRuntime ABI builds completed.${NC}"
 echo -e "${YELLOW}Installation directories are in: $ONNXRUNTIME_INSTALL_ROOT_DIR/${NC}"
 ls -1 "$ONNXRUNTIME_INSTALL_ROOT_DIR"
 echo -e "${YELLOW}===============================================================${NC}"
-s

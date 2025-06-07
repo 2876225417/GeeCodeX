@@ -87,9 +87,9 @@
 | ANDROID_SDK_HOME        | ANDROID_SDK_HOME 路径 |
 | ANDROID_NDK_HOME        | ANDROID_NDK_HOME 路径 |
 | NDK_VERSION_STRING      | ANDROID_NDK 版本信息   |
-| CLANG_COMPILER_PATH     | Clang(C)路径          |
-| CLANG_CXX_COMPILER_PATH | Clang(C++)路径        |
-| CLANG_VERSION_STRING    | Clang 版本信息         |
+| CLANG_COMPILER_PATH     | NDK Clang(C)路径      |
+| CLANG_CXX_COMPILER_PATH | NDK Clang(C++)路径    |
+| CLANG_VERSION_STRING    | NDK Clang 版本信息     |
 | HOST_GCC_PATH           | 主机 gcc 路径          |
 | HOST_GXX_PATH           | 主机 g++ 路径          |
 | HOST_GCC_VERSION        | 主机 gcc 版本          |
