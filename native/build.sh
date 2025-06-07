@@ -36,8 +36,9 @@ TEST_LOG_FILE_DIR="${SCRIPT_DIR}/tests/logs"
 mkdir -p "${TEST_LOG_FILE_DIR}"
 
 # ---- 运行参数 ----
-BUILD_TESTS="off"
-TARGET_ARCH=""
+BUILD_TESTS="off"    # 是否构建测试(默认:off)
+SAVE_LOGS="off"      # 是否保存测试日志(默认:off)
+TARGET_ARCH=""       # 编译架构
 
 print_usage() {
     echo -e "${YELLOW}Usage: $0 [OPTIONS]${NC}"
@@ -49,6 +50,9 @@ print_usage() {
     echo ""
     echo -e "   ${CYAN}--build_tests=<on|off>${NC}  Enable or disable building tests. Default is 'off'."
     echo -e "   ${YELLOW}Note: If 'on', the architecture is automatically set to 'linux-x86_64'.${NC}"
+    echo ""
+    echo -e "   ${CYAN}--save_logs=<on|off>${NC}  Enable or disable saving tests logs. Default is 'off'."
+    echo -e "   ${YELLOW}Note: If 'on', the test logs will be saved to ${TEST_LOG_FILE_DIR}.${NC}"
     echo -e "   ${CYAN}-h, --help${NC}              Show this help message."
     echo ""
     echo -e "   ${YELLOW}Example (Android cross-compile):${NC}"
@@ -56,6 +60,9 @@ print_usage() {
     echo ""
     echo -e "   ${YELLOW}Example (Native Linux build with tests):${NC}"
     echo -e "   ${CYAN}$0 --build_tests=on${NC}"
+    echo ""
+    echo -e "   ${YELLOW}Example (Save tests log):${NC}"
+    echo -e "   ${CYAN}$0 --save_logs=on${NC}"
 }
 
 is_supported_arch() {
@@ -81,6 +88,10 @@ for i in "$@"; do
         BUILD_TESTS="${i#*=}"
         shift
         ;;
+        --save_logs=*)
+        SAVE_LOGS="${i#*=}"
+        shift
+        ;;
         -h|--help)
         print_usage
         exit 0
@@ -99,6 +110,10 @@ if [[ "$BUILD_TESTS" == "on" ]]; then
         echo -e "${YELLOW}Warning: --build_tests=on overrides arch. Forcing architecture to 'linux-x86_64'.${NC}"
     fi
     TARGET_ARCH="linux-x86_64"
+fi
+
+if [[ "$SAVE_LOGS" == "on" ]]; then
+    echo -e "${YELLOW}Info: Tests info will be saved to file ${TEST_LOG_FILE_DIR}"
 fi
 
 if [ -z "$TARGET_ARCH" ]; then
@@ -129,7 +144,6 @@ mkdir -p "$BUILD_DIR"
 
 # 2. Configure
 echo -e "${GREEN}Configuring CMake...${NC}"
-
 
 BUILD_TESTS_CMAKE="${BUILD_TESTS^^}"
 CMAKE_COMMON_ARGS=(
@@ -178,20 +192,30 @@ if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
     
     
     TEST_LOG_FILE="${TEST_LOG_FILE_DIR}/$(date).txt"
-    if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
-        CTEST_EXIT_CODE=0
-    else
-        CTEST_EXIT_CODE=$?
-    fi
     
+    if [ "$SAVE_LOGS" == "on" ]; then
+        if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
+            CTEST_EXIT_CODE=0
+        else
+            CTEST_EXIT_CODE=$?
+        fi
+    else
+        if ctest --test-dir ${TEST_DIR} --verbose ; then
+            CTEST_EXIT_CODE=0
+        else
+            CTEST_EXIT_CODE=$?
+        fi
+    fi
+
     if [ "$CTEST_EXIT_CODE" -ne 0 ]; then
         echo -e "${BRED}ERROR: FAILED TO CTEST EXECUTED.${NC}"
         echo -e "${BRED}Please check testing log: ${TEST_LOG_FILE}.${NC}"
     else
         echo -e "${BYELLOW}SUCCESS: CTEST EXECUTED SUCCESSFULLY.${NC}"
-        echo -e "${BYELLOW}More info please check log: ${TEST_LOG_FILE}.${NC}"
+        if [ "$SAVE_LOGS" == "on" ]; then
+            echo -e "${BYELLOW}More info please check log: ${TEST_LOG_FILE}.${NC}"
+        fi
     fi
-
 else
     echo ""
     echo -e "${BGREEN}ABI ${TARGET_ABI} Project's building is finished!${NC}"

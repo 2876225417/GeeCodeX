@@ -152,6 +152,52 @@ endif()
 pretty_message(INFO "=================================")
 # Eigen3 find_package 配置结束
 
+
+# magic_enum find_package 配置开始
+pretty_message(INFO "===== magic_enum Configurations =====")
+set(MAGIC_ENUM_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/magic_enum")
+if (BUILD_TESTS)
+    set(magic_enum_DIR "${MAGIC_ENUM_INSTALL_ROOT_DIR}/magic_enum_host/magic_enum/share/cmake/magic_enum")
+elseif(ANDROID)
+    set(magic_enum_DIR "${MAGIC_ENUM_INSTALL_ROOT_DIR}/magic_enum_android/magic_enum/share/cmake/magic_enum")
+endif()
+
+if (NOT EXISTS "${magic_enum_DIR}/magic_enumConfig.cmake")
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "magic_enumConfig.cmake NOT FOUND for platform: Linux-x86_64 at path: ${magic_enum_DIR}. Ensure custom magic_enum builds are in native/3rdparty/magic_enum/ and path is correct")
+    elseif (ANDROID)
+        pretty_message(FATAL_ERROR "magic_enumConfig.cmake NOT FOUND for ABI: ${CMAKE_ANDROID_ARCH_ABI} at path: ${magic_enum_DIR}. Ensure custom magic_enum builds are in native/3rdparty/magic_enum/ and path is correct")
+    endif()
+else()
+    if (BUILD_TESTS)    
+        pretty_message(INFO "Using magic_enum_DIR: ${magic_enum_DIR} for platform: Linux-x86_64")
+    elseif (ANDROID)
+        pretty_message(INFO "Using magic_enum_DIR: ${magic_enum_DIR} for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+endif()
+
+find_package(magic_enum REQUIRED)
+
+if (NOT magic_enum_FOUND)
+    if (BUILD_TESTS)
+        pretty_message(FATAL_ERROR "magic_enum configuration failed for platform: Linux-x86_64.")
+    elseif(ANDROID)
+        pretty_message(FATAL_ERROR "magic_enum configuration failed for ABI: ${CMAKE_ANDROID_ARCH_ABI}.")
+    endif()
+else() 
+    if (BUILD_TESTS)
+        pretty_message(SUCCESS "Found magic_enum (Version: ${magic_enum_VERSION}) for platform: Linux-x86_64")
+    elseif (ANDROID)
+        pretty_message(SUCCESS "Found magic_enum (Version: ${magic_enum_VERSION}) for ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+    endif()
+    pretty_message(DEBUG   " magic_enum Include Dirs: ${MAGIC_ENUM_INCLUDE_DIRS}")
+    pretty_message(DEBUG   " magic_enum Libraries: ${MAGIC_ENUM_LIBS}")
+endif()
+pretty_message(INFO "=================================")
+# magic_enum find_package 配置结束
+
+
+
 # fmt find_package 配置开始
 pretty_message(INFO "===== fmt Configurations =====")
 set(FMT_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/fmt")
@@ -203,8 +249,6 @@ if (ANDROID AND ENABLE_BOOST)
 
 endif()
 
-
-
 file(GLOB_RECURSE SOURCES 
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "*.cpp"
@@ -242,6 +286,11 @@ if (Eigen3_FOUND)
         ${EIGEN3_INCLUDE_DIRS})
 endif()
 
+if (magic_enum_FOUND)
+    target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
+        ${magic_enum_INCLUDE_DIRS})
+endif()
+
 if (fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))
     target_include_directories(${FFI_LIBRARY_NAME} PRIVATE
         ${fmt_INCLUDE_DIRS})
@@ -266,6 +315,11 @@ endif()
 if (Eigen3_FOUND)
     target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
         Eigen3::Eigen)
+endif()
+
+if (magic_enum_FOUND)
+    target_link_libraries(${FFI_LIBRARY_NAME} PUBLIC
+        magic_enum::magic_enum)
 endif()
 
 if (fmt_FOUND AND (ENABLE_EXTERNAL_FMT OR NOT HAVE_STD_FORMAT))

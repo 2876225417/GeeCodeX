@@ -3,8 +3,8 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include <string>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #if defined (USE_STD_FMT)
@@ -69,30 +69,58 @@ namespace console_style {
 
 
 #if defined(USE_STD_FMT) || defined(USE_EXTERNAL_FMT)
-template <typename... Args>
-void log_info(app_format_string<Args...> fmt_str, Args&&... args) {
+#ifdef BUILD_TESTS
+using LoggerRetType_ = bool;
+#else
+using LoggerRetType = void;
+#endif
+
+template < typename... Args
+         , typename RetType = LoggerRetType_>
+auto log_info(app_format_string<Args...> fmt_str, Args&&... args) -> LoggerRetType_ {
     std::cout << console_style::CYAN << "[INFO]     " << console_style::RESET
               << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
               << std::endl;
-}
-template <typename... Args>
-void log_success(app_format_string<Args...> fmt_str, Args&&... args) {
-    std::cout << console_style::CYAN << "[SUCCESS]  " << console_style::RESET
-              << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
-              << std::endl;
-}
-template <typename... Args>
-void log_warning(app_format_string<Args...> fmt_str, Args&&... args) {
-    std::cout << console_style::CYAN << "[WARNING]  " << console_style::RESET
-              << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
-              << std::endl;
-}
-template <typename... Args>
-void log_error(app_format_string<Args...> fmt_str, Args&&... args) {
-    std::cout << console_style::CYAN << "[ERROR]    " << console_style::RESET
-              << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
-              << std::endl;
-}
+#ifdef BUILD_TESTS
+    return true;
 #endif
+}
+template < typename... Args
+         , typename RetType = LoggerRetType_>
+auto log_success(app_format_string<Args...> fmt_str, Args&&... args) -> LoggerRetType_ {
+    std::cout << console_style::YELLOW << "[SUCCESS]  " << console_style::RESET
+              << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
+              << std::endl;
+#ifdef BUILD_TESTS
+    return true;
+#endif
+}
+template < typename... Args
+         , typename RetType = LoggerRetType_>
+auto log_warning(app_format_string<Args...> fmt_str, Args&&... args) -> LoggerRetType_ {
+    std::cout << console_style::RED << "[WARNING]  " << console_style::RESET
+              << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
+              << std::endl;
+#ifdef BUILD_TESTS
+    return true;
+#endif
+}
+template <typename... Args>
+auto log_error(app_format_string<Args...> fmt_str, Args&&... args) -> LoggerRetType_ {
+    std::cout << console_style::RED << "[ERROR]    " << console_style::RESET
+              << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
+              << std::endl;
+#ifdef BUILD_TESTS
+    return true;
+#endif
+}
+
+
+#endif
+
+
+
+
+
 
 #endif // LOGGER_HPP

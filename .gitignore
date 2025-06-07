@@ -65,6 +65,7 @@ native/3rdparty/source/
 native/3rdparty/build/eigen3
 native/3rdparty/build/fmt
 native/3rdparty/build/opencv
+native/3rdparty/build/magic_enum
 native/3rdparty/build/boost
 
 
@@ -73,6 +74,7 @@ native/3rdparty/onnxruntime/
 native/3rdparty/eigen3/
 native/3rdparty/boost/
 native/3rdparty/fmt/
+native/3rdparty/magic_enum/
 
 native/3rdparty/logs/
 native/tests/logs/
