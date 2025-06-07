@@ -30,6 +30,11 @@ DEFAULT_ANDROID_API="android-24"    # 默认 Android API Level
 DEFAULT_CMAKE_BUILD_TYPE="Release"  # 默认 Build Type
 BUILD_DIR="${SCRIPT_DIR}/build"     
 
+# 此处使用默认生成的测试路径
+TEST_DIR="${SCRIPT_DIR}/build/tests/"
+TEST_LOG_FILE_DIR="${SCRIPT_DIR}/tests/logs"
+mkdir -p "${TEST_LOG_FILE_DIR}"
+
 # ---- 运行参数 ----
 BUILD_TESTS="off"
 TARGET_ARCH=""
@@ -156,8 +161,38 @@ else
 fi
 
 # 3. Build
-echo -e "${GREEN}Building...${NC}"
+if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
+    echo -e "${GREEN}Building test... for $TARGET_ARCH ${NC}"
+    echo -e "${GREEN}Generated test will be automatically executed ${NC}"
+else
+    echo -e "${GREEN}Building project for $TARGET_ARCH ${NC}"
+fi
+
 cmake --build "${BUILD_DIR}" --config "${DEFAULT_CMAKE_BUILD_TYPE}" --parallel $(nproc)
 
-echo ""
-echo -e "${BGREEN}ABI ${TARGET_ABI} Project's building is finished!${NC}"
+if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
+
+
+    echo -e "${YELLOW}Generated test dir: ${TEST_DIR}${NC}"
+    echo -e "${YELLOW}--- Running test: ctest --test_dir ${TEST_DIR} --verbose ---${NC}"
+    
+    
+    TEST_LOG_FILE="${TEST_LOG_FILE_DIR}/$(date).txt"
+    if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
+        CTEST_EXIT_CODE=0
+    else
+        CTEST_EXIT_CODE=$?
+    fi
+    
+    if [ "$CTEST_EXIT_CODE" -ne 0 ]; then
+        echo -e "${BRED}ERROR: FAILED TO CTEST EXECUTED.${NC}"
+        echo -e "${BRED}Please check testing log: ${TEST_LOG_FILE}.${NC}"
+    else
+        echo -e "${BYELLOW}SUCCESS: CTEST EXECUTED SUCCESSFULLY.${NC}"
+        echo -e "${BYELLOW}More info please check log: ${TEST_LOG_FILE}.${NC}"
+    fi
+
+else
+    echo ""
+    echo -e "${BGREEN}ABI ${TARGET_ABI} Project's building is finished!${NC}"
+fi

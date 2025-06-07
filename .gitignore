@@ -74,4 +74,6 @@ native/3rdparty/eigen3/
 native/3rdparty/boost/
 native/3rdparty/fmt/
 
-native/3rdparty/logs
+native/3rdparty/logs/
+native/tests/logs/
+native/Testing/
