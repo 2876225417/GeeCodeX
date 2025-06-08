@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <ocr/transform.h>
 #include <opencv2/core/mat.hpp>
-#include "test_helper.cpp"
+#include <test_helper.h>
 
 TEST(ocr_test, handle_null_ptr) {
     geecodex::ocr::encoded2mat params;
@@ -19,7 +19,13 @@ TEST(ocr_test, handle_null_ptr) {
 }
 
 TEST(ocr_test, decode_valid_jpeg) {
-    auto img_data = geecodex::native::test::helper::read_file2vec("test_src/chars_1.jpg");
+    
+    /* Here using relative path to find pic sources 
+     * also can use CMake to copy the assets to the tests working directory
+     * ex. native/build/tests
+     */
+    auto img_data = 
+        geecodex::native::test::helper::read_file2vec("../../tests/test_src/chars_1.jpg");
 
     geecodex::ocr::encoded2mat params;
     params.encoded_img_ = img_data.data();
