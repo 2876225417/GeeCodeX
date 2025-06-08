@@ -63,7 +63,6 @@ pretty_message(INFO "===== ONNXRuntime Configurations =====")
 set(ONNXRUNTIME_INSTALL_ROOT_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime")
 
 
-
 if (BUILD_TESTS)
     set(onnxruntime_DIR "${ONNXRUNTIME_INSTALL_ROOT_DIR}/onnxruntime_linux-x86_64/lib64/cmake/onnxruntime")
 elseif(ANDROID)
@@ -246,13 +245,15 @@ pretty_message(INFO "==============================")
 
 if (ANDROID AND ENABLE_BOOST) 
 
-
 endif()
 
 file(GLOB_RECURSE SOURCES 
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "*.cpp"
 )
+
+pretty_message(VINFO "CMAKE CURRENT SOURCE DIR SOURCES: ${SOURCES}")
+
 
 add_library(${FFI_LIBRARY_NAME} SHARED
     ${SOURCES}

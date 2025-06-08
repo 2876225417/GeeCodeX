@@ -11,7 +11,7 @@ namespace geecodex::ocr {
         int data_length_;        // 数据长度
         std::string err_msg_;    // 错误信息
     };
-    inline auto encoded_img_2_cv_mat(encoded2mat&) -> cv::Mat;
+    auto encoded_img_2_cv_mat(encoded2mat&) -> cv::Mat;
 
 } // namespace geecodex::ocr
 

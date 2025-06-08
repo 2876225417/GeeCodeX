@@ -7,11 +7,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <vector>
 
-
 namespace geecodex::ocr{
-    inline auto 
+    auto 
     encoded_img_2_cv_mat(encoded2mat& trans_params)-> cv::Mat {
-        auto [encoded_img, data_length, err_msg] = trans_params;
+        auto& [encoded_img, data_length, err_msg] = trans_params;
         err_msg.clear();
 
         if (encoded_img == nullptr || data_length <= 0) {
@@ -44,5 +43,4 @@ namespace geecodex::ocr{
         }
         return cv::Mat{};
     }
-
 } // namespace geecodex::ocr

@@ -10,7 +10,8 @@
 #include <utility>
 #include <vector>
 #include <magic_enum/magic_enum.hpp>
-#include <type_traits>
+
+//namespace geecodex_native {
 
 #if defined (USE_STD_FMT)
 #include <format>
@@ -48,6 +49,8 @@ using app_format_string = app_format_string_basic;
 #endif
 
 namespace console_style {
+
+#if defined(USE_CPP_COLORED_DEBUG_OUTPUT)
 enum class Color: std::int8_t {
     RESET,
     BLACK,
@@ -60,8 +63,6 @@ enum class Color: std::int8_t {
     WHITE
 };
 
-
-#if defined(USE_CPP_COLORED_DEBUG_OUTPUT)
 constexpr auto 
 get_color_code(Color color) 
 noexcept -> std::string_view{
@@ -75,25 +76,29 @@ noexcept -> std::string_view{
         case Color::MAGENTA: return "\033[1;35m";
         case Color::CYAN   : return "\033[0;36m";
         case Color::WHITE  : return "\033[1;37m";
-        default: return "";
+        default            : return "";
     }
 }
 
 #else
+enum class Color: std::int8_t { NO_COLOR };
+
 constexpr auto
 get_color_code(Color /* color */)
 noexcept -> std::string_view{
     return "";
 }
-#endif
+#endif // defined(USE_CPP_COLORED_DEBUG_OUTPUT)
+
 } // namespace console_style
 
 
 template <bool IsBuildTests>
-struct logger_traits { using return_type = void; };
-
+struct logger_traits        { using return_type = decltype(void()); };
 template <>
-struct logger_traits<true> { using return_type = bool; };
+struct logger_traits<true>  { using return_type = decltype(bool()); };
+template <>
+struct logger_traits<false> { using return_type = decltype(void()); };
 
 #ifdef BUILD_TESTS
 constexpr bool is_test_build = true;
@@ -103,16 +108,15 @@ constexpr bool is_test_build = false;
 
 using LoggerRetType = typename logger_traits<is_test_build>::return_type;
 
-
 #if defined(USE_STD_FMT) || defined(USE_EXTERNAL_FMT)
+
 enum class LogLevel: std::int8_t {
     INFO,
     SUCCESS,
     WARNING,
     ERROR,
-    FATAL_ERORR
+    FATAL_ERROR
 };
-
 
 template <size_t N>
 struct fixed_string {
@@ -171,7 +175,7 @@ noexcept -> console_style::Color {
         case LogLevel::SUCCESS:     return console_style::Color::YELLOW;
         case LogLevel::WARNING:     return console_style::Color::RED;
         case LogLevel::ERROR:       return console_style::Color::RED;
-        case LogLevel::FATAL_ERORR: return console_style::Color::RED;
+        case LogLevel::FATAL_ERROR: return console_style::Color::RED;
         default:                    return console_style::Color::RESET;
     }
 }
@@ -184,20 +188,25 @@ struct log_attributes {
 template <LogLevel level>
 struct log_level_traits {
 private:
-    static constexpr auto name_sv = magic_enum::enum_name<level>();
-    
-    // 文本输出对齐处理
-    static constexpr size_t max_name_len = 7;
-    static constexpr size_t padding_size = max_name_len > name_sv.size() ? max_name_len - name_sv.size() : 0;
-
     static constexpr auto 
     generate_tag() { /* 如 [SUCCESS] */
+        constexpr auto name_sv = magic_enum::enum_name<level>();
+        constexpr size_t name_sv_len = name_sv.size();
+
+        std::array<char, name_sv_len + 1> processed_name_buffer = {};
+        for (size_t i = 0; i < name_sv_len; ++i) 
+            processed_name_buffer[i] = (name_sv[i] == '_') ? ' ' : name_sv[i];
+
+        fixed_string<name_sv_len> processed_name(processed_name_buffer.data());
+        constexpr size_t max_name_len = 11;
+        constexpr size_t padding_size = max_name_len > name_sv_len ? max_name_len - name_sv_len : 0;
+
         fixed_string<1> left_bracket = std::string_view("[");
         fixed_string<1> right_bracket = std::string_view("]");
-        // 从 8 个空格中取出对应数量的空格
+        // 从 12 个空格中取出对应数量的空格
         fixed_string<padding_size> padding(std::string_view("            ", padding_size));
         
-        return left_bracket + fixed_string<name_sv.size()>(name_sv) + right_bracket + padding;
+        return left_bracket + processed_name + right_bracket + padding;
     }
     static constexpr auto generate_tag_object = generate_tag();
 public:
@@ -224,7 +233,6 @@ auto log( app_format_string<Args...> fmt_str
 
 #endif
 
-
-
+//} // namespace geecodex_native
 
 #endif // LOGGER_HPP

@@ -34,4 +34,14 @@ TEST(logger_test, print_all_log_types) {
     std::cout << output;
     EXPECT_THAT(output, HasSubstr("[ERROR]"));
     EXPECT_THAT(output, HasSubstr("Test Error Message in RED"));
+
+    testing::internal::CaptureStdout();
+    log<LogLevel::FATAL_ERROR>("Test Fatal Error Message in {}", "RED");
+    output = testing::internal::GetCapturedStdout();
+    std::cout << output;
+    EXPECT_THAT(output, HasSubstr("[FATAL ERROR]"));
+    EXPECT_THAT(output, HasSubstr("Test Fatal Error Message in RED"));
+
+
+
 }

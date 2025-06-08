@@ -4,7 +4,7 @@
 #include <iostream>
 #include <add/add.h>
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[]) -> decltype(int()) {
     std::cout << "2 + 3 = " << add::add(2, 3) << std::endl;
 
     std::cout << "2.5 + 3.5 = " << add::add(2.5, 3.5) << std::endl;

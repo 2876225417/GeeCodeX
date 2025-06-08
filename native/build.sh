@@ -39,6 +39,7 @@ mkdir -p "${BUILD_LOG_FILE_DIR}"
 # ---- 运行参数 ----
 BUILD_WITH_CLEAN="on"   # 构建前是否清空构建目录(默认:on)
 BUILD_TESTS="off"       # 是否构建测试(默认:off)
+VERBOSE_TEST_INFO="off" # 是否显示详细测试信息
 BUILD_EXAMPLES="off"    # 是否构建用例(默认:off)
 BUILD_TYPE="Release"    # 构建类型(默认:Release)
 SAVE_TESTS_LOGS="off"   # 是否保存测试日志(默认:off)
@@ -57,6 +58,8 @@ print_usage() {
     echo ""
     echo -e "   ${CYAN}--build_tests=<on|off>       ${NC}       Enable or disable building tests. Default is '${BUILD_TESTS}'"
     echo -e "   ${YELLOW}Note: If 'on', the architecture is automatically set to 'linux-x86_64'.${NC}"
+    echo ""
+    echo -e "   ${CYAN}--verbose_test_info=<on|off> ${NC}       Enable or disable show verbose tests. Default is '${BUILD_TESTS}'"
     echo ""
     echo -e "   ${CYAN}--build_examples=<on|off>    ${NC}       Enable or disable building examples. Default is '${BUILD_EXAMPLES}'."
     echo -e "   ${YELLOW}Note: If 'on', the architecture is automatically set to 'linux-x86_64'.${NC}"
@@ -79,6 +82,8 @@ print_usage() {
     echo ""
     echo -e "   ${YELLOW}Example (Native Linux build with tests):       ${NC}"
     echo -e "   ${CYAN}$0 --build_tests=on                              ${NC}"
+    echo -e "   ${YELLOW}Example (Tests info in verbose):               ${NC}"
+    echo -e "   ${CYAN}$0 --verbose_test_info=on                       ${NC}"
     echo ""
     echo -e "   ${YELLOW}Example (Native Linux build with examples):    ${NC}"
     echo -e "   ${CYAN}$0 --build_examples=on                           ${NC}"
@@ -148,6 +153,10 @@ for i in "$@"; do
         BUILD_WITH_CLEAN="${i#*=}"
         shift
         ;;
+        --verbose_test_info=*)
+        VERBOSE_TEST_INFO="${i#*=}"
+        shift
+        ;;
         -h|--help)
         print_usage
         exit 0
@@ -161,7 +170,7 @@ for i in "$@"; do
     esac
 done
 
-if [[ "$BUILD_WITH_CLEAN" == "on" ]] || [ "$BUILD_WITH_CLEAN" == "ON"]; then
+if [[ "$BUILD_WITH_CLEAN" == "on" ]] || [[ "$BUILD_WITH_CLEAN" == "ON" ]]; then
     echo -e "${YELLOW}Info: Build will be executed before clean the build directory.${NC}"
 fi
 
@@ -191,6 +200,10 @@ if [ -z "$TARGET_ARCH" ]; then
     echo -e "${BRED}Error: Target architecture not specified. Use --arch=<ARCH> or --build_tests=on.${NC}"
     print_usage
     exit 1
+fi
+
+if [[ "$VERBOSE_TEST_INFO" = "on" ]]; then
+    echo -e "${YELLOW}Info: Tests info will show in verbose${NC}"
 fi
 
 if ! is_supported_arch "$TARGET_ARCH"; then
@@ -271,20 +284,33 @@ cmake --build "${BUILD_DIR}" --config "${DEFAULT_CMAKE_BUILD_TYPE}" --parallel $
 if [[ "$TARGET_ARCH" == "linux-x86_64" ]]; then
 
     if [[ "$BUILD_TESTS_CMAKE" == "ON" ]]; then
+        CTEST_ARGS=(
+            "--test-dir" "${TEST_DIR}"
+            "--verbose"
+        )
+
+        VERBOSE_TEST_INFO_FLAG="${VERBOSE_TEST_INFO^^}"
+        if [ "$VERBOSE_TEST_INFO_FLAG" = "ON" ]; then
+            CTEST_ARGS+=(
+                "--rerun-failed"
+                "--output-on-failure"
+            )
+        fi
+
         echo -e "${YELLOW}Generated test dir: ${TEST_DIR}${NC}"
-        echo -e "${YELLOW}--- Running test: ctest --test_dir ${TEST_DIR} --verbose ---${NC}"
+        echo -e "${YELLOW}--- Running test: ctest ${CTEST_ARGS[*]} ---${NC}"
     
         TEST_LOG_FILE="${TEST_LOG_FILE_DIR}/$(date).txt"
         SAVE_TESTS_LOGS_FLAGS="${SAVE_TESTS_LOGS^^}"
 
         if [ "$SAVE_TESTS_LOGS_FLAGS" == "ON" ]; then
-            if ctest --test-dir ${TEST_DIR} --verbose > "$TEST_LOG_FILE"; then
+            if ctest "${CTEST_ARGS[@]}" > "$TEST_LOG_FILE"; then
                 CTEST_EXIT_CODE=0
             else
                 CTEST_EXIT_CODE=$?
             fi
         else
-            if ctest --test-dir ${TEST_DIR} --verbose ; then
+            if ctest "${CTEST_ARGS[@]}" ; then
                 CTEST_EXIT_CODE=0
             else
                 CTEST_EXIT_CODE=$?
