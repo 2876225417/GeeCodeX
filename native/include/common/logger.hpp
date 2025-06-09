@@ -7,11 +7,12 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <magic_enum/magic_enum.hpp>
 
-//namespace geecodex_native {
+
 
 #if defined (USE_STD_FMT)
 #include <format>
@@ -33,72 +34,214 @@ auto make_format_args(Args&&... args) {
     return fmt::make_format_args(std::forward<Args>(args)...);
 }
 #else
-#include <sstream>
-namespace app_format_ns {
-    template <typename... Args>
-    auto format(const std::string& fmt_str, Args&&... args) -> std::string {
-        std::ostringstream oss;
-        oss << fmt_str;
-        ((oss << " " << args), ...);
-        return oss.str();
-    }
-} // namespace app_format_ns
-using app_format_string_basic = const std::string&;
-template <typename... Args>
-using app_format_string = app_format_string_basic;
+#error "Required std::fmt or fmt for format output."
 #endif
 
-namespace console_style {
+template <typename... Args>
+using app_format_string = app_format_ns::format_string<Args...>;
+using app_format_ns::make_format_args;
 
-#if defined(USE_CPP_COLORED_DEBUG_OUTPUT)
-enum class Color: std::int8_t {
-    RESET,
-    BLACK,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE
+namespace geecodex::native::log::logger {
+
+namespace detail {
+template <size_t N>
+struct fixed_string {
+    std::array<char, N + 1> data_{};
+    
+    constexpr fixed_string() = default;
+#if __cplusplus <= 202002L
+    consteval fixed_string(const char (&str)[N + 1]) {
+        for (size_t i = 0; i <= N; ++i) 
+            data_[i] = str[i];
+    }
+
+    constexpr fixed_string(const std::array<char, N + 1>& str) {
+        for (size_t i = 0; i <= N; ++i) 
+            data_[i] = str[i];
+    }
+
+    constexpr fixed_string(std::string_view sv) {
+        for (size_t i = 0; i < N; ++i) 
+            data_[i] = sv[i];
+    }    
+
+    template <size_t M>
+    constexpr auto operator+ (const fixed_string<M>& other) const {
+        fixed_string<N + M> result;
+        // Copy fixed_string<N>
+        for (size_t i = 0; i < N; ++i) 
+            result.data_[i] = this->data_[i];
+        // Copy fixed_string<M>
+        for (size_t i = 0; i < M: ++i) 
+            result.data_[i + N] = other->data_[i];
+        return result;
+    } 
+#else
+    consteval fixed_string(const char (&str)[N + 1]) {
+        std::copy_n(str, N + 1, data_.begin());
+    }
+
+    constexpr fixed_string(const std::array<char, N + 1>& str) {
+        std::copy_n(str.data(), N + 1, data_.begin());    
+    }
+
+    constexpr fixed_string(const std::string_view& sv) {
+        std::copy_n(sv.data(), N, data_.begin());
+    }
+
+    template <size_t M>
+    constexpr auto operator+ (const fixed_string<M>& other) const {
+        fixed_string<N + M> result;
+        // Copy fixed_string<N>
+        std::copy_n(this->data_.data(), N, result.data_.data());
+        // Copy fixed_string<M>
+        std::copy_n(other.data_.data(), M, result.data_.data() + N);
+        return result;
+    }
+#endif // __cplusplus <= 202002L
+
+    [[nodiscard]] constexpr auto size()  const -> size_t { return N; }
+    [[nodiscard]] constexpr auto c_str() const -> const char* { return data_.data(); }
+    constexpr operator std::string_view() const { return { data_.data(), N}; }
 };
 
-constexpr auto 
-get_color_code(Color color) 
-noexcept -> std::string_view{
-    switch (color) {
-        case Color::RESET  : return "\033[0m";
-        case Color::BLACK  : return "\033[30m"; 
-        case Color::RED    : return "\033[1;31m"; 
-        case Color::GREEN  : return "\033[1;32m"; 
-        case Color::YELLOW : return "\033[1;33m";
-        case Color::BLUE   : return "\033[1;34m";
-        case Color::MAGENTA: return "\033[1;35m";
-        case Color::CYAN   : return "\033[0;36m";
-        case Color::WHITE  : return "\033[1;37m";
-        default            : return "";
+template <size_t N> // CTAD
+fixed_string(const char (&str)[N]) -> fixed_string<N - 1>;
+
+template <std::uintmax_t V>
+consteval auto to_string() {
+    if constexpr (V == 0) return fixed_string("0");
+    else {
+        constexpr auto num_digits = [] {
+            size_t count = 0;
+            for (auto i = V; i > 0 ; i /= 10) count++;
+            return count;
+        }();
+        fixed_string<num_digits> result{};
+        auto val = V;
+        for (size_t i = 0; i < num_digits; ++i) {
+            result.data_[num_digits - 1 - i] = '0' + (val % 10);
+            val /= 10;
+        }
+        return result;
+    }
+}
+
+
+consteval auto build_style_string() { return fixed_string(""); }
+
+template <auto Head, auto... Tail>
+consteval auto build_style_string() {
+    constexpr auto val = magic_enum::enum_integer(Head);
+    
+    auto head_str = to_string<val>();
+    if constexpr (sizeof...(Tail) > 0) 
+        return head_str + fixed_string(";") + build_style_string<Tail...>();
+    else
+        return head_str;
+}
+} // namespace detail
+
+
+namespace console_style {
+#if defined(USE_CPP_COLORED_DEBUG_OUTPUT)
+
+enum class Attribute: std::int8_t {
+    RESET     = 0,  // 重置样式
+    BOLD      = 1,  // 粗体或增亮
+    DIM       = 2,  // 暗淡
+    UNDERLINE = 4,  // 下划线
+    BLINK     = 5,  // 闪烁
+    REVERSE   = 7,  // 反色
+    HIDDEN    = 8   // 隐藏
+};
+
+enum class ForegroundColor: std::int8_t {
+    DEFAULT   = 39,
+    BLACK     = 30, RED   = 31, GREEN   = 32,
+    YELLOW    = 33, BLUE  = 34, MAGENTA = 35,
+    CYAN      = 36, WHITE = 37
+};
+
+enum class BackgroundColor: std::int8_t {
+    DEFAULT   = 49,
+    BLACK     = 40, RED   = 41, GREEN   = 42,
+    YELLOW    = 43, BLUE  = 44, MAGENTA = 45,
+    CYAN      = 46, WHITE = 47
+};
+
+enum class PresetStyle: std::int8_t {
+    C_RESET,
+    C_BLACK,  C_RED,  C_GREEN,
+    C_YELLOW, C_BLUE, C_MAGENTA,
+    C_CYAN,   C_WHITE,
+    B_RESET,
+    B_BLACK,  B_RED,  B_GREEN,
+    B_YELLOW, B_BLUE, B_MAGENTA,
+    B_CYAN,   B_WHITE,
+    U_RESET,
+    U_BLACK,  U_RED,  U_GREEN,
+    U_YELLOW, U_BLUE, U_MAGENTA,
+    U_CYAN,   U_WHITE,
+};
+
+template <auto... Styles>
+consteval auto apply() {
+    if constexpr (sizeof...(Styles) == 0) {
+        return detail::fixed_string("\x1b[0m");
+    } else {
+        auto style_codes = detail::build_style_string<Styles...>();
+        return detail::fixed_string("\x1b[") + style_codes + detail::fixed_string("m");
+    }
+}
+
+
+template <PresetStyle Preset>
+consteval auto get_preset_style_code() noexcept {
+    if constexpr (Preset == PresetStyle::C_RESET ||
+                  Preset == PresetStyle::B_RESET ||
+                  Preset == PresetStyle::U_RESET
+                ) { return apply<Attribute::RESET>(); }
+    
+    else if constexpr (Preset == PresetStyle::C_BLACK)   { return apply<ForegroundColor::BLACK>(); }
+    else if constexpr (Preset == PresetStyle::C_RED)     { return apply<ForegroundColor::RED>(); }
+    else if constexpr (Preset == PresetStyle::C_GREEN)   { return apply<ForegroundColor::GREEN>(); }
+    else if constexpr (Preset == PresetStyle::C_YELLOW)  { return apply<ForegroundColor::YELLOW>(); }
+    else if constexpr (Preset == PresetStyle::C_BLUE)    { return apply<ForegroundColor::BLUE>(); }
+    else if constexpr (Preset == PresetStyle::C_MAGENTA) { return apply<ForegroundColor::MAGENTA>(); }
+    else if constexpr (Preset == PresetStyle::C_CYAN)    { return apply<ForegroundColor::CYAN>(); }
+    else if constexpr (Preset == PresetStyle::C_WHITE)   { return apply<ForegroundColor::WHITE>(); }
+    // 粗体颜色
+    else if constexpr (Preset == PresetStyle::B_BLACK)   { return apply<Attribute::BOLD, ForegroundColor::BLACK>(); }
+    else if constexpr (Preset == PresetStyle::B_RED)     { return apply<Attribute::BOLD, ForegroundColor::RED>(); }
+    else if constexpr (Preset == PresetStyle::B_GREEN)   { return apply<Attribute::BOLD, ForegroundColor::GREEN>(); }
+    else if constexpr (Preset == PresetStyle::B_YELLOW)  { return apply<Attribute::BOLD, ForegroundColor::YELLOW>(); }
+    else if constexpr (Preset == PresetStyle::B_BLUE)    { return apply<Attribute::BOLD, ForegroundColor::BLUE>(); }
+    else if constexpr (Preset == PresetStyle::B_MAGENTA) { return apply<Attribute::BOLD, ForegroundColor::MAGENTA>(); }
+    else if constexpr (Preset == PresetStyle::B_CYAN)    { return apply<Attribute::BOLD, ForegroundColor::CYAN>(); }
+    else if constexpr (Preset == PresetStyle::B_WHITE)   { return apply<Attribute::BOLD, ForegroundColor::WHITE>(); }
+    // 下划线颜色
+    else if constexpr (Preset == PresetStyle::U_BLACK)   { return apply<Attribute::UNDERLINE, ForegroundColor::BLACK>(); }
+    else if constexpr (Preset == PresetStyle::U_RED)     { return apply<Attribute::UNDERLINE, ForegroundColor::RED>(); }
+    else if constexpr (Preset == PresetStyle::U_GREEN)   { return apply<Attribute::UNDERLINE, ForegroundColor::GREEN>(); }
+    else if constexpr (Preset == PresetStyle::U_YELLOW)  { return apply<Attribute::UNDERLINE, ForegroundColor::YELLOW>(); }
+    else if constexpr (Preset == PresetStyle::U_BLUE)    { return apply<Attribute::UNDERLINE, ForegroundColor::BLUE>(); }
+    else if constexpr (Preset == PresetStyle::U_MAGENTA) { return apply<Attribute::UNDERLINE, ForegroundColor::MAGENTA>(); }
+    else if constexpr (Preset == PresetStyle::U_CYAN)    { return apply<Attribute::UNDERLINE, ForegroundColor::CYAN>(); }
+    else if constexpr (Preset == PresetStyle::U_WHITE)   { return apply<Attribute::UNDERLINE, ForegroundColor::WHITE>(); }
+    else {
+        static_assert(std::is_void_v<decltype(Preset)>, "Unsupported preset style provided!");
+        return detail::fixed_string("");
     }
 }
 
 #else
-enum class Color: std::int8_t { NO_COLOR };
-
-constexpr auto
-get_color_code(Color /* color */)
-noexcept -> std::string_view{
-    return "";
-}
+template <PresetStyle Preset>
+consteval auto get_preset_style_code()
+noexcept { return detail::fixed_string<1>(""); }
 #endif // defined(USE_CPP_COLORED_DEBUG_OUTPUT)
 
 } // namespace console_style
-
-
-template <bool IsBuildTests>
-struct logger_traits        { using return_type = decltype(void()); };
-template <>
-struct logger_traits<true>  { using return_type = decltype(bool()); };
-template <>
-struct logger_traits<false> { using return_type = decltype(void()); };
 
 #ifdef BUILD_TESTS
 constexpr bool is_test_build = true;
@@ -106,7 +249,7 @@ constexpr bool is_test_build = true;
 constexpr bool is_test_build = false;
 #endif
 
-using LoggerRetType = typename logger_traits<is_test_build>::return_type;
+using LoggerRetType = std::conditional_t<is_test_build, bool, void>;
 
 #if defined(USE_STD_FMT) || defined(USE_EXTERNAL_FMT)
 
@@ -118,71 +261,22 @@ enum class LogLevel: std::int8_t {
     FATAL_ERROR
 };
 
-template <size_t N>
-struct fixed_string {
-    std::array<char, N + 1> data_ = {};
-    
-    constexpr fixed_string(const std::array<char, N + 1>& str) {
-    #if __cplusplus <= 202002L
-        for (size_t i = 0; i <= N; ++i) 
-            data_[i] = str[i];
-    #else
-        std::copy_n(str.data(), N + 1, data_.data());
-    #endif
-    }
-
-    constexpr fixed_string(std::string_view sv) {
-    #if __cplusplus <= 202002L
-        for (size_t i = 0; i < N; ++i)
-            data_[i] = sv[i];
-    #else
-        std::copy_n(sv.data(), N, data_.data());
-    #endif
-    }
-
-    constexpr operator std::string_view() const {
-        return {data_.data(), N};
-    }
-    
-    [[nodiscard]] constexpr auto size() const -> size_t { return N; }
-};
-
-template <size_t N, size_t M>
 constexpr auto 
-operator+( const fixed_string<N>& lhs
-         , const fixed_string<M>& rhs
-         ) -> fixed_string<N + M> {
-    std::array<char, N + M + 1> new_data = {};
-#if __cplusplus <= 202002L
-    for (size_t i = 0; i <= N; ++i)
-         new_data[i] = lhs.data_[i];
-
-    for (size_t i = 0; i <= M; ++i)
-        new_data[N + i] = rhs.data_[i];
-#else
-    new_data[N + M] = '\0';
-    std::copy_n(lhs.data_.data(), N, new_data.data());
-    std::copy_n(rhs.data_.data(), M, new_data.data() + N);
-#endif
-    return fixed_string<N + M>(new_data);
-}
-
-constexpr auto 
-color2level(LogLevel level) 
-noexcept -> console_style::Color {
+level2style(LogLevel level) 
+noexcept -> console_style::PresetStyle {
     switch (level) {
-        case LogLevel::INFO:        return console_style::Color::CYAN;
-        case LogLevel::SUCCESS:     return console_style::Color::YELLOW;
-        case LogLevel::WARNING:     return console_style::Color::RED;
-        case LogLevel::ERROR:       return console_style::Color::RED;
-        case LogLevel::FATAL_ERROR: return console_style::Color::RED;
-        default:                    return console_style::Color::RESET;
+        case LogLevel::INFO:        return console_style::PresetStyle::B_GREEN;
+        case LogLevel::SUCCESS:     return console_style::PresetStyle::B_CYAN;
+        case LogLevel::WARNING:     return console_style::PresetStyle::B_YELLOW;
+        case LogLevel::ERROR:       return console_style::PresetStyle::B_RED;
+        case LogLevel::FATAL_ERROR: return console_style::PresetStyle::U_RED;
+        default:                    return console_style::PresetStyle::C_RESET;
     }
 }
 
 struct log_attributes {
-    console_style::Color color_;
-    std::string_view     tag_;
+    console_style::PresetStyle style_;
+    std::string_view           tag_;
 };
 
 template <LogLevel level>
@@ -197,21 +291,21 @@ private:
         for (size_t i = 0; i < name_sv_len; ++i) 
             processed_name_buffer[i] = (name_sv[i] == '_') ? ' ' : name_sv[i];
 
-        fixed_string<name_sv_len> processed_name(processed_name_buffer.data());
+        detail::fixed_string<name_sv_len> processed_name(processed_name_buffer.data());
         constexpr size_t max_name_len = 11;
         constexpr size_t padding_size = max_name_len > name_sv_len ? max_name_len - name_sv_len : 0;
 
-        fixed_string<1> left_bracket = std::string_view("[");
-        fixed_string<1> right_bracket = std::string_view("]");
+        detail::fixed_string<1> left_bracket = std::string_view("[");
+        detail::fixed_string<1> right_bracket = std::string_view("]");
         // 从 12 个空格中取出对应数量的空格
-        fixed_string<padding_size> padding(std::string_view("            ", padding_size));
+        detail::fixed_string<padding_size> padding(std::string_view("            ", padding_size));
         
         return left_bracket + processed_name + right_bracket + padding;
     }
     static constexpr auto generate_tag_object = generate_tag();
 public:
     static constexpr log_attributes value {
-        .color_ = color2level(level),
+        .style_ = level2style(level),
         .tag_   = generate_tag_object
     };
 };
@@ -219,12 +313,13 @@ public:
 
 template<LogLevel level, typename... Args>
 auto log( app_format_string<Args...> fmt_str
-        , Args&&... args) -> decltype(LoggerRetType())
+        , Args&&... args) -> LoggerRetType
         {
-    auto [color, tag] = log_level_traits<level>::value;
+    constexpr auto style = log_level_traits<level>::value.style_;
+    constexpr auto tag   = log_level_traits<level>::value.tag_;
     
-    std::cout << console_style::get_color_code(color) << tag
-              << console_style::get_color_code(console_style::Color::RESET)
+    std::cout << console_style::get_preset_style_code<style>().c_str() << tag
+              << console_style::get_preset_style_code<console_style::PresetStyle::C_RESET>().c_str()
               << app_format_ns::vformat(fmt_str.get(), make_format_args(std::forward<Args>(args)...))
               << std::endl;
 
@@ -232,7 +327,6 @@ auto log( app_format_string<Args...> fmt_str
 }
 
 #endif
-
-//} // namespace geecodex_native
+} // namespace geecodex::native::log::logger
 
 #endif // LOGGER_HPP

@@ -8,6 +8,8 @@ TEST(logger_test, print_all_log_types) {
     std::string output;    
     using ::testing::HasSubstr;
     
+    using namespace geecodex::native::log::logger;
+
     log<LogLevel::INFO>("Test Info Message in {}", "CYAN");
     output = testing::internal::GetCapturedStdout();
     std::cout << output;
@@ -41,7 +43,4 @@ TEST(logger_test, print_all_log_types) {
     std::cout << output;
     EXPECT_THAT(output, HasSubstr("[FATAL ERROR]"));
     EXPECT_THAT(output, HasSubstr("Test Fatal Error Message in RED"));
-
-
-
 }
