@@ -1,20 +1,21 @@
 // lib/models/book.dart
 import 'package:flutter/foundation.dart';
 
+// Book Metainfo
 class Book {
-  final int id; // API uses int ID
+  final int id;
   final String title;
   final String author;
   final String? description;
   final String? isbn;
   final String? language;
   final int? pageCount;
-  final String? publishDate; // Keep as String or parse to DateTime
+  final String? publishDate;
   final String? publisher;
-  final List<String>? tags; // Assuming tags are strings
+  final List<String>? tags;
   final int? downloadCount;
-  final DateTime? createdAt; // Parse from String
-  String coverUrl; // This will be constructed
+  final DateTime? createdAt;
+  String coverUrl;
 
   Book({
     required this.id,
@@ -29,15 +30,13 @@ class Book {
     this.tags,
     this.downloadCount,
     this.createdAt,
-    required this.coverUrl, // Make required or provide default
+    required this.coverUrl,
   });
 
-  // Factory constructor to parse JSON
   factory Book.fromJson(Map<String, dynamic> json) {
     DateTime? parseDateTime(String? dateString) {
       if (dateString == null) return null;
       try {
-        // Adjust format if needed, API example has timezone info
         return DateTime.parse(dateString);
       } catch (e) {
         if (kDebugMode) {
@@ -47,8 +46,7 @@ class Book {
       }
     }
 
-    // Construct the cover URL
-    final int bookId = json['id'] as int; // Assume ID is always present and int
+    final int bookId = json['id'] as int;
     final String constructedCoverUrl =
         'http://jiaxing.website/geecodex/books/cover/$bookId';
 
@@ -62,16 +60,13 @@ class Book {
       pageCount: json['page_count'] as int?,
       publishDate: json['publish_date'] as String?,
       publisher: json['publisher'] as String?,
-      // Handle tags list (ensure it's List<dynamic> then cast)
       tags:
           (json['tags'] as List<dynamic>?)
               ?.map((tag) => tag.toString())
               .toList(),
       downloadCount: json['download_count'] as int?,
       createdAt: parseDateTime(json['created_at'] as String?),
-      coverUrl: constructedCoverUrl, // Use the constructed URL
+      coverUrl: constructedCoverUrl,
     );
   }
-
-  // TODO: Add a toJson method if need to send Book data
 }

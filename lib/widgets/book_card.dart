@@ -2,11 +2,21 @@
 import 'package:flutter/material.dart';
 import 'package:Geecodex/models/book.dart';
 
+// Crousal Book Card in Book Browser Screen
+// ---Layout----
+//     Book
+//    Cover
+//    Title
+//   Author
+// -------------
+
 class BookCard extends StatelessWidget {
   final Book mBook;
   final VoidCallback onTap;
 
   const BookCard({super.key, required this.mBook, required this.onTap});
+
+  // Tap then jump to Page of book details
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +24,7 @@ class BookCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
-        width: 140, // Adjust width as needed
+        width: 140,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -25,16 +35,14 @@ class BookCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                clipBehavior:
-                    Clip.antiAlias, // Clip the image to the card shape
+                clipBehavior: Clip.antiAlias,
                 child: SizedBox(
-                  width: double.infinity, // Take full width of the card
+                  width: double.infinity,
                   child:
                       mBook.coverUrl.isNotEmpty
                           ? Image.network(
                             mBook.coverUrl,
                             fit: BoxFit.cover,
-                            // Add errorBuilder for network issues
                             errorBuilder:
                                 (context, error, stackTrace) => Container(
                                   color: Colors.grey[200],
